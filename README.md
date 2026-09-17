@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="rsc/icons/Repatch.svg" width="128" alt="Repatch logo">
+</p>
+
 # Repatch — content-aware fill for PixInsight
 
 Repatch is a PixInsight process module that fills a masked region of an image
@@ -10,6 +14,17 @@ Phase 1 implements the classic multi-scale **PatchMatch** algorithm
 (Barnes et al. 2009) — no neural network, no internet, deterministic when you
 give it a seed. A `Neural` mode (ONNX inpainting) is planned as a later phase
 and already appears, disabled, in the interface.
+
+<p align="center">
+  <img src="images/screenshot.png" width="494" alt="The Repatch process dialog">
+</p>
+
+**Demo** — removing stars with the brush; each stroke is filled as soon as it
+is released:
+
+<p align="center">
+  <a href="images/demo.mp4"><img src="images/demo.gif" width="800" alt="Repatch demo: painting out stars in PixInsight"></a>
+</p>
 
 ## Requirements
 

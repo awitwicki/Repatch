@@ -210,7 +210,7 @@
 <p>Pyramid levels / Auto</p>
 </dt>
 <dd>
-<p>1 to 8. How many resolution levels to use. <em>Auto</em> picks 1 + log<sub>2</sub>(hole size / patch size), clipped so that the coarsest level is still at least two patches wide, i.e. the hole is about one patch wide at the coarsest level. Set it manually to 1 for tiny holes or when you want purely local texture; more levels give more coherent large-scale structure in big holes.</p>
+<p>1 to 8. How many resolution levels to use. <em>Auto</em> picks 1 + log<sub>2</sub>(hole size / patch size), clipped so that the coarsest level is still at least two patches wide, i.e. the hole is about one patch wide at the coarsest level. Set it manually to 1 for tiny holes or when you want purely local texture; more levels give more coherent large-scale structure in big holes. Either way the number is an upper bound: levels whose sample ring or search radius leaves no room for a whole source patch at that scale are dropped, and the console reports how many were actually used.</p>
 </dd>
 <dt>
 <p>Iterations</p>
@@ -296,7 +296,7 @@
 <p><span class="pidoc_code">no valid source region</span></p>
 </dt>
 <dd>
-<p>No patch fits without touching the hole: the sample ring is too narrow, the patch is too large, or the hole covers almost the whole (preview) image. Increase the ring, reduce the patch size, or use a larger preview.</p>
+<p>At full resolution no patch fits without touching the hole: the sample ring is too narrow, the patch is too large, or the hole covers almost the whole (preview) image. Increase the ring, reduce the patch size, or use a larger preview.</p>
 </dd>
 <dt>
 <p><span class="pidoc_code">searchRadius too small</span></p>

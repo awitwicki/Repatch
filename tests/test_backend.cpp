@@ -369,3 +369,50 @@ TEST_CASE( backend_weight_is_clamped )
    REQUIRE( backend.Fill( rr ).ok );
    CHECK( s.img.data == ref.img.data );
 }
+
+// Regression: the pyramid depth comes from the hole size, but with a bounded
+// sample ring the working region is only ring + patch around the hole. At
+// coarse levels that margin halves while the patch radius does not, so a
+// level can end up with no valid source centre at all. Such levels must be
+// dropped (levelsUsed < requested), not fail the whole fill.
+TEST_CASE( backend_drops_coarse_levels_without_sources )
+{
+   Scene s = MakeScene( 400, 400, 1, 150 ); // 299x299 hole
+   repatch::Image original = s.img;
+   repatch::FillParams p = BaseParams();
+   p.patchSize = 11;
+   p.sampleRing = 45; // brush default for radius 15
+   p.iterations = 2;
+   repatch::FillRequest r = MakeRequest( s, p );
+   repatch::PatchBackend backend;
+   repatch::FillResult res = backend.Fill( r );
+   REQUIRE( res.ok );
+   // Auto would ask for 1 + floor(log2(299/11)) = 5 levels; the coarse ones
+   // have no room for a source patch inside the 56 px margin.
+   CHECK( res.levelsUsed >= 1 );
+   CHECK( res.levelsUsed < 5 );
+   int changed = 0;
+   for ( size_t i = 0; i < s.hole.size(); ++i )
+      if ( s.hole[i] && s.img.data[i] != original.data[i] )
+         ++changed;
+   CHECK( changed > 299 * 299 / 2 );
+
+   // An explicit level count is a cap as well: the same request with
+   // pyramidLevels = 5 succeeds with the same number of levels.
+   Scene s2 = MakeScene( 400, 400, 1, 150 );
+   p.pyramidLevels = 5;
+   r = MakeRequest( s2, p );
+   repatch::FillResult res2 = backend.Fill( r );
+   REQUIRE( res2.ok );
+   CHECK( res2.levelsUsed == res.levelsUsed );
+   CHECK( s2.img.data == s.img.data );
+
+   // The finest level still needs a source region; that remains an error.
+   Scene tiny = MakeScene( 20, 20, 1, 5 );
+   p = BaseParams();
+   p.patchSize = 11;
+   r = MakeRequest( tiny, p );
+   res = backend.Fill( r );
+   CHECK( !res.ok );
+   CHECK( res.error.find( "no valid source region" ) != std::string::npos );
+}

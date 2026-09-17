@@ -123,7 +123,9 @@ above for the workflow.
   Auto picks `1 + log2(hole size / patch size)`, so that at the coarsest level
   the hole is about one patch wide. Set it manually to 1 for tiny holes or
   when you want purely local texture; more levels give more coherent large
-  structure.
+  structure. Either way the number is an upper bound: levels whose sample
+  ring or search radius leaves no room for a whole source patch at that
+  scale are dropped, and the console reports how many were actually used.
 - **Iterations** (1–50, default 5) — PatchMatch passes per level. Quality
   saturates quickly; 4–6 is plenty.
 
@@ -174,10 +176,10 @@ above for the workflow.
 
 ## Troubleshooting
 
-- **"no valid source region"** — no patch fits without touching the hole:
-  the sample ring is too narrow, the patch is too large, or the hole covers
-  almost the whole (preview) image. Increase the ring, reduce the patch size,
-  or use a larger preview.
+- **"no valid source region"** — at full resolution no patch fits without
+  touching the hole: the sample ring is too narrow, the patch is too large,
+  or the hole covers almost the whole (preview) image. Increase the ring,
+  reduce the patch size, or use a larger preview.
 - **"searchRadius too small"** — some hole pixels have no source within the
   radius; increase it or set it to 0.
 - **"Mask dimensions do not match"** — the mask must match the target, or the

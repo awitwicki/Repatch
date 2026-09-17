@@ -152,29 +152,46 @@ FillResult PatchBackend::Fill( FillRequest& req, const ProgressFn& progress )
          roi.y1 = std::min( H, bb.y1 + expand );
       }
 
+      // The requested level count is a cap. CapPyramidLevels keeps the
+      // coarsest level at least two patches wide; the loop below drops any
+      // coarse level that has no usable source region, which happens when a
+      // bounded sample ring or search radius shrinks with the level while the
+      // patch radius does not (a brush stroke much larger than its ring, for
+      // instance). Only the finest level must have sources.
       int levels = ( P.pyramidLevels > 0 ) ? P.pyramidLevels : AutoPyramidLevels( bb, P.patchSize );
       levels = CapPyramidLevels( levels, roi.Width(), roi.Height(), P.patchSize );
-      res.levelsUsed = levels;
 
-      // Build the pyramid.
-      std::vector<Level> L( levels );
-      L[0].img = CropFromView( V, roi );
-      L[0].hole = CropMask( holeFull, W, H, roi );
-      for ( int k = 1; k < levels; ++k )
-      {
-         L[k].img = DownsampleImage( L[k - 1].img, threads );
-         L[k].hole = DownsampleMask( L[k - 1].hole, L[k - 1].img.width, L[k - 1].img.height );
-      }
+      // Build the pyramid, one level at a time.
+      std::vector<Level> L;
+      L.reserve( levels );
       for ( int k = 0; k < levels; ++k )
       {
-         L[k].r = r;
-         L[k].searchRadius = ( P.searchRadius > 0 ) ? std::max( 1, P.searchRadius >> k ) : 0;
-         L[k].stretch = stretched ? stretch : nullptr;
+         Level lv;
+         if ( k == 0 )
+         {
+            lv.img = CropFromView( V, roi );
+            lv.hole = CropMask( holeFull, W, H, roi );
+         }
+         else
+         {
+            lv.img = DownsampleImage( L[k - 1].img, threads );
+            lv.hole = DownsampleMask( L[k - 1].hole, L[k - 1].img.width, L[k - 1].img.height );
+         }
+         lv.r = r;
+         lv.searchRadius = ( P.searchRadius > 0 ) ? std::max( 1, P.searchRadius >> k ) : 0;
+         lv.stretch = stretched ? stretch : nullptr;
          const int ring = ( P.sampleRing > 0 ) ? std::max( 1, P.sampleRing >> k ) : 0;
          std::string err;
-         if ( !BuildLevelRegions( L[k], ( k == 0 ) ? P.feather : 0, ring, threads, err ) )
-            return fail( err + " (pyramid level " + std::to_string( k + 1 ) + " of " + std::to_string( levels ) + ")" );
+         if ( !BuildLevelRegions( lv, ( k == 0 ) ? P.feather : 0, ring, threads, err ) )
+         {
+            if ( k == 0 )
+               return fail( err );
+            break; // coarser levels would only be worse; stop the pyramid here
+         }
+         L.push_back( std::move( lv ) );
       }
+      levels = int( L.size() );
+      res.levelsUsed = levels;
 
       // Progress bookkeeping: one unit per target pixel per pass.
       std::vector<double> targetCount( levels );

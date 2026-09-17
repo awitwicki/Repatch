@@ -302,3 +302,31 @@ TEST_CASE( stroke_fill_feather_forced_off_and_opacity_controls_edge )
    CHECK( edgeChecked > 0 );
    CHECK( edgeDiffers );
 }
+
+// Regression: a stroke much larger than its automatic sample ring
+// (max(32, 3*radius)) used to fail with "no valid source region" at a coarse
+// pyramid level, and the interface then silently restored the original
+// pixels. With the module defaults (patch 11, feather 3, ring 0) and the
+// default brush radius 15, a scribble covering ~200x200 px must fill.
+TEST_CASE( stroke_fill_large_stroke_with_small_ring_succeeds )
+{
+   repatch::Image img = TexturedImage( 400, 400, 11 );
+   repatch::Image original = img;
+   repatch::Stroke s;
+   s.radius = 15; s.softness = 0.5f; s.opacity = 1.0f;
+   for ( int row = 0; row <= 13; ++row )
+      for ( int i = 0; i <= 20; ++i )
+         s.points.push_back( { 100.0f + 10.0f * i, 100.0f + 15.0f * row } );
+   repatch::FillParams p; // module defaults
+   p.iterations = 2;
+   p.randomSeed = repatch::DeriveStrokeSeed( 1, 0 );
+   p.threads = 2;
+   repatch::FillResult r = repatch::FillStroke( img.View(), s, p );
+   REQUIRE( r.ok );
+   CHECK( r.levelsUsed >= 1 );
+   int changed = 0;
+   for ( size_t i = 0; i < img.data.size(); ++i )
+      changed += ( img.data[i] != original.data[i] );
+   CHECK( changed > 200 * 200 / 2 );
+   CHECK( img.At( 0, 2, 2 ) == original.At( 0, 2, 2 ) );
+}

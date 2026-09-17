@@ -1,0 +1,6 @@
+build/
+bin/
+*.xsgn
+.DS_Store
+dist/
+/docs/superpowers

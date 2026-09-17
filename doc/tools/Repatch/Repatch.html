@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+   <title>PixInsight Reference Documentation | Repatch</title>
+   <meta name="keywords" content="content-aware fill, inpainting, PatchMatch, healing brush, artifact removal, satellite trail, hot column" />
+   <meta name="author" content="A. Witwicki" />
+   <meta name="description" content="Fills a painted or masked region with content synthesized from its surroundings (content-aware fill)." />
+   <meta name="robots" content="INDEX,FOLLOW" />
+   <meta name="generator" content="Hand-written in the PixInsight Documentation Compiler output format (PIToolDoc)" />
+   <meta name="pidoc-document-class" content="PIToolDoc" />
+   <script type="text/javascript" src="../../pidoc/scripts/pidoc-utility.js"></script>
+   <link type="text/css" href="../../pidoc/css/pidoc-common.css" rel="stylesheet" />
+   <link type="text/css" href="../../pidoc/css/pidoc-highlight.css" rel="stylesheet" />
+   <link type="text/css" href="../../pidoc/css/pidoc-tool.css" rel="stylesheet" />
+   <link rel="icon" href="../../pidoc/icons/pidoc-icon.svg" />
+</head>
+<body>
+<script type="text/javascript">
+   pidoc_generateDynamicContents();
+</script>
+
+<h1>Repatch</h1>
+
+<hr class="separator"/>
+
+<div id="brief">
+<p>Fills a painted or masked region with content synthesized from its surroundings (content-aware fill). <a href="#__contents__">[more]</a></p></div>
+
+<div id="categories">
+<p><strong>Categories:</strong> Painting</p>
+</div>
+
+<div id="keywords">
+<p><strong>Keywords:</strong> content-aware fill, inpainting, PatchMatch, healing brush, artifact removal, satellite trail, hot column</p>
+</div>
+
+<h3 class="pidoc_sectionTitle" id="__toc__">Contents</h3>
+<p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'toc', this );">[hide]</p>
+<div id="toc">
+<ul>
+<li class="pidoc_tocItem"><a href="#__Description__">1&emsp;Description</a></li>
+<li class="pidoc_tocItem"><a href="#__Usage__">2&emsp;Usage</a>
+<ul>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Painting_with_the_brush__">2.1&emsp;Painting with the brush</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Working_with_a_mask_image__">2.2&emsp;Working with a mask image</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Mode__">2.3&emsp;Mode</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Mask_source__">2.4&emsp;Mask source</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Brush__">2.5&emsp;Brush</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Mask__">2.6&emsp;Mask</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Patch__">2.7&emsp;Patch</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Sampling__">2.8&emsp;Sampling</a></li>
+<li class="pidoc_tocSubitem"><a href="#__Usage_:_Output__">2.9&emsp;Output</a></li>
+</ul>
+</li>
+<li class="pidoc_tocItem"><a href="#__Tips_for_astronomical_images__">3&emsp;Tips for astronomical images</a></li>
+<li class="pidoc_tocItem"><a href="#__Troubleshooting__">4&emsp;Troubleshooting</a></li>
+<li class="pidoc_tocItem"><a href="#__Algorithm_summary__">5&emsp;Algorithm summary</a></li>
+<li class="pidoc_tocItem"><a href="#__references__">References</a></li>
+<li class="pidoc_tocItem"><a href="#__related_tools__">Related Tools</a></li>
+</ul>
+</div>
+
+<div id="__contents__">
+
+<div class="pidoc_section" id="__Description__">
+   <h3 class="pidoc_sectionTitle">1&emsp;Description</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Description', this );">[hide]</p>
+   <div id="Description">
+<img style="float:left;margin-right:1.25em;margin-bottom:0.5em;width:96px;" src="images/Repatch.svg" alt=""/>
+<p>Repatch replaces the pixels of a <em>hole</em> with content synthesized from the rest of the image, in the manner of the content-aware fill and healing brush tools of raster editors. The hole is either painted directly on the image with a brush (the default), or taken from a separate mask image.</p>
+<p>The tool works coarse-to-fine. At a very low resolution the hole is filled by smooth diffusion, which fixes the large-scale gradient and brightness. Then, at each finer level, every patch that overlaps the hole is matched to the most similar patch elsewhere in the image with the PatchMatch algorithm<sup><a href="#__reference_1__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Reference 1]&lt;br/&gt;C. Barnes, E. Shechtman, A. Finkelstein and D. B. Goldman, &lt;em&gt;PatchMatch: A Randomized Correspondence Algorithm for Structural Image Editing&lt;/em&gt;, ACM Transactions on Graphics (Proc. SIGGRAPH), vol. 28, no. 3, 2009.">[1]</a></sup>, and the hole pixels are rebuilt by averaging what those matches propose. The result carries the surrounding noise, gradient and texture into the hole.</p>
+<p>Repatch is not magic: it can only reuse what already exists in the image. It is ideal for removing satellite trails, hot columns, blooming spikes, small artifacts, or unwanted objects on background; it cannot invent structure that the surroundings do not contain.</p>
+<p>This release implements the classic, non-neural PatchMatch algorithm. It runs entirely on the local machine, honours the global parallelism settings, and produces byte-identical results for a given random seed regardless of the number of threads.</p>
+<p><br class="pidoc_clearfix"/></p>
+   </div>
+</div>
+
+<div class="pidoc_section" id="__Usage__">
+   <h3 class="pidoc_sectionTitle">2&emsp;Usage</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Usage', this );">[hide]</p>
+   <div id="Usage">
+
+<div class="pidoc_subsection" id="__Usage_:_Painting_with_the_brush__">
+   <h4 class="pidoc_subsectionTitle">2.1&emsp;<a id="brush_workflow_section"></a>Painting with the brush</h4>
+<p>Repatch is a dynamic tool, like CloneStamp: with its window open you paint on an image view. <em>Mask source</em> must be set to <em>Brush</em> (the default).</p>
+
+<ol class="pidoc_list">
+<li class="pidoc_spaced_list_item"><strong>Pick the target.</strong> Your first press-and-drag on a main view both selects that view as the <em>session target</em> and paints the first stroke (release without dragging to paint a single dot). The Patch, Sampling and Output parameters freeze at that moment and stay greyed out until the session ends, so set them first. The status line under the brush controls changes from <em>No target view selected</em> to <em>Target: &hellip; (N stroke(s))</em>. One session works on one view: commit it before painting elsewhere. Previews are not supported as targets, only main views.</li>
+<li class="pidoc_spaced_list_item"><strong>Paint.</strong> Press the left button and drag over the defect. The circle under the cursor is the brush; the orange band is the region the stroke will cover. Release the button and the region is filled immediately from the surrounding pixels. Each new stroke sees the already-filled image, so you can work outwards from a clean area.</li>
+<li class="pidoc_spaced_list_item"><strong>Adjust.</strong> <em>Radius</em> (<kbd>[</kbd> / <kbd>]</kbd>, with <kbd>Shift</kbd> in steps of 10), <em>Softness</em> and <em>Opacity</em> apply to the next stroke. <em>Undo stroke</em> (<kbd>Ctrl+Z</kbd>), <em>Redo</em> (<kbd>Ctrl+Y</kbd>) and <em>Clear</em> restore pixels exactly; nothing is recomputed.</li>
+<li class="pidoc_spaced_list_item"><strong>Commit.</strong> Press the <em>Apply</em> button (the check mark). The whole session becomes a single <em>Repatch</em> entry in the view's history, with the strokes and the seed as parameters, so the history icon can be dragged onto another copy of the image and reproduces the same pixels. The <em>Cancel</em> button (the cross) or closing the window restores the original pixels and releases the target.</li>
+</ol>
+
+<p>In Brush mode a <em>Sample ring</em> of 0 means <em>automatic</em>: sources come from a ring of max(32, 3&nbsp;&times;&nbsp;radius) pixels around each stroke, which keeps large images responsive; enter a value to override it. <em>Feather</em> does not apply to brush strokes at all; each stroke's own <em>Softness</em> and <em>Opacity</em> control its edge and how much of the hole is replaced.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Working_with_a_mask_image__">
+   <h4 class="pidoc_subsectionTitle">2.2&emsp;<a id="mask_workflow_section"></a>Working with a mask image</h4>
+<p>Set <em>Mask source</em> to <em>Mask image</em> for this workflow. It suits scripted or batch work, and masks generated with PixelMath, StarMask or a binarized copy of the image.</p>
+
+<ol class="pidoc_list">
+<li class="pidoc_spaced_list_item"><strong>Make a mask image</strong> with the same dimensions as the target (or as its main image, if you will run on a preview). Any pixel with a value <em>strictly greater</em> than <em>Threshold</em> (default 0.5) is filled. Grow the mask a little beyond the defect; one or two pixels of margin avoid halos.</li>
+<li class="pidoc_spaced_list_item"><strong>Use a preview.</strong> Define a preview around the defect and apply Repatch to it. Only the preview is processed, so iterations are fast. When the result looks right, apply the same instance to the main image; the mask is used at full size.</li>
+<li class="pidoc_spaced_list_item"><strong>Commit.</strong> Press <em>Apply</em> with the target view active. The history explorer records the instance; Undo restores.</li>
+<li class="pidoc_spaced_list_item"><strong>Check the console.</strong> It prints the hole size, the pyramid levels, the random seed and the time. With <em>Random seed</em> = 0 a new seed is drawn each run and reported; enter it to reproduce a result you like.</li>
+</ol>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Mode__">
+   <h4 class="pidoc_subsectionTitle">2.3&emsp;<a id="mode_section"></a>Mode</h4>
+
+<dl class="pidoc_list">
+<dt>
+<p>Patch</p>
+</dt>
+<dd>
+<p>The PatchMatch algorithm described in this document. The only mode available in this release.</p>
+</dd>
+<dt>
+<p>Neural</p>
+</dt>
+<dd>
+<p>Reserved for a future neural-network (ONNX) inpainting mode. Disabled.</p>
+</dd>
+</dl>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Mask_source__">
+   <h4 class="pidoc_subsectionTitle">2.4&emsp;<a id="mask_source_section"></a>Mask source</h4>
+
+<dl class="pidoc_list">
+<dt>
+<p>Brush</p>
+</dt>
+<dd>
+<p>The default. The region to fill is painted directly on the target view; see <a href="#brush_workflow_section">Painting with the brush</a>.</p>
+</dd>
+<dt>
+<p>Mask image</p>
+</dt>
+<dd>
+<p>The region to fill is taken from a separate mask view; see <a href="#mask_workflow_section">Working with a mask image</a> and the <a href="#mask_section">Mask</a> section. Switching sources while a brush session has strokes discards them, after confirmation.</p>
+</dd>
+</dl>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Brush__">
+   <h4 class="pidoc_subsectionTitle">2.5&emsp;<a id="brush_section"></a>Brush</h4>
+<p>These controls are only used when <em>Mask source</em> is <em>Brush</em>.</p>
+
+<dl class="pidoc_list">
+<dt>
+<p>Radius</p>
+</dt>
+<dd>
+<p>Brush radius in pixels (1 to 500, default 15). The keys <kbd>[</kbd> and <kbd>]</kbd> change it by 1, or by 10 with <kbd>Shift</kbd>.</p>
+</dd>
+<dt>
+<p>Softness</p>
+</dt>
+<dd>
+<p>0 to 1, default 0.5. With 0 the whole disc is replaced with a hard edge; higher values fade the fill into the original over the outer part of the radius (1 fades over the whole radius).</p>
+</dd>
+<dt>
+<p>Opacity</p>
+</dt>
+<dd>
+<p>0 to 1, default 1. How much of the synthesized content is mixed into the hole of a stroke: 1 replaces the pixels, 0.5 blends half synthesized and half original. This is the brush-mode counterpart of <em>Feather</em>, which does not apply to strokes.</p>
+</dd>
+<dt>
+<p>strokes</p>
+</dt>
+<dd>
+<p>The table of committed strokes (per-point x/y coordinates plus each stroke's radius, softness and opacity), written by painting and read back on execution to replay the session exactly. It is not meant to be edited by hand, but a script can set it directly to generate brush instances.</p>
+</dd>
+</dl>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Mask__">
+   <h4 class="pidoc_subsectionTitle">2.6&emsp;<a id="mask_section"></a>Mask</h4>
+
+<dl class="pidoc_list">
+<dt>
+<p>Mask image</p>
+</dt>
+<dd>
+<p>The view that defines the hole. Main views only. If the target is a preview and the mask has the main image's dimensions, the mask is cropped to the preview automatically. A colour mask uses its first channel.</p>
+</dd>
+<dt>
+<p>Threshold</p>
+</dt>
+<dd>
+<p>0 to 1, default 0.5. Mask values strictly above this are filled.</p>
+</dd>
+</dl>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Patch__">
+   <h4 class="pidoc_subsectionTitle">2.7&emsp;<a id="patch_section"></a>Patch</h4>
+
+<dl class="pidoc_list">
+<dt>
+<p>Patch size</p>
+</dt>
+<dd>
+<p>5 to 41, odd, default 11. The side in pixels of the square patches being compared and copied; even values are rounded up. Larger patches preserve larger structures (gradients, big stars) but are slower and can look repetitive; smaller patches follow fine texture and noise. Rule of thumb: at least the size of the largest feature you want reproduced, and not larger than half the hole.</p>
+</dd>
+<dt>
+<p>Pyramid levels / Auto</p>
+</dt>
+<dd>
+<p>1 to 8. How many resolution levels to use. <em>Auto</em> picks 1 + log<sub>2</sub>(hole size / patch size), clipped so that the coarsest level is still at least two patches wide, i.e. the hole is about one patch wide at the coarsest level. Set it manually to 1 for tiny holes or when you want purely local texture; more levels give more coherent large-scale structure in big holes.</p>
+</dd>
+<dt>
+<p>Iterations</p>
+</dt>
+<dd>
+<p>1 to 50, default 5. PatchMatch passes (propagation and random search) per pyramid level. Quality saturates quickly; 4 to 6 is plenty, and the running time grows roughly linearly.</p>
+</dd>
+</dl>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Sampling__">
+   <h4 class="pidoc_subsectionTitle">2.8&emsp;<a id="sampling_section"></a>Sampling</h4>
+
+<dl class="pidoc_list">
+<dt>
+<p>Search radius</p>
+</dt>
+<dd>
+<p>Pixels; 0 means unbounded. Limits how far from a hole pixel its source patch may be (a square of &plusmn;radius pixels). Useful on big images to keep the search local and fast. If it is so small that some hole pixels have no valid source, the process fails with <span class="pidoc_code">searchRadius too small</span>.</p>
+</dd>
+<dt>
+<p>Sample ring</p>
+</dt>
+<dd>
+<p>Pixels; 0 means the whole image (in Brush mode, 0 means automatic; see <a href="#brush_workflow_section">Painting with the brush</a>). Restricts <em>source</em> patches to a ring of this width around the hole, measured from the hole's edge. This is the setting that makes Repatch behave on astronomical backgrounds: with a ring of 30 to 80 pixels the fill is built only from the immediate surroundings, so the gradient and noise level match. If the ring contains stars you do not want copied, widen the mask or paint from a star-free area.</p>
+</dd>
+</dl>
+
+<p>The two limits are different: the sample ring says which pixels are allowed as sources at all (distance from the hole), while the search radius says how far each individual match may be from the pixel being filled.</p>
+</div>
+
+<div class="pidoc_subsection" id="__Usage_:_Output__">
+   <h4 class="pidoc_subsectionTitle">2.9&emsp;<a id="output_section"></a>Output</h4>
+
+<dl class="pidoc_list">
+<dt>
+<p>Match space</p>
+</dt>
+<dd>
+<p><em>Stretched</em> (default) compares patches on an automatically stretched copy of the image (a median/MAD screen stretch), which is what you want for linear data: faint background structure participates in the match instead of being dominated by a few bright pixels. The filled pixels are always copied from the original data, so linear images stay linear. <em>Linear</em> compares raw values; use it for already stretched, non-linear images.</p>
+</dd>
+<dt>
+<p>Feather</p>
+</dt>
+<dd>
+<p>Pixels, 0 to 256, default 3. Width of a soft blend just <em>outside</em> the hole that hides the seam between synthesized and original pixels; 0 disables it. Mask image mode only: there the hole itself is always fully replaced and the feather affects the ring around it. In Brush mode the feather is ignored and each stroke's <em>Softness</em> and <em>Opacity</em> take its place.</p>
+</dd>
+<dt>
+<p>Random seed</p>
+</dt>
+<dd>
+<p>0 draws a fresh seed on each run (in Brush mode the seed is drawn once when the session starts and stored in the instance, so undo, redo and replay are consistent). Any other value gives a reproducible result, identical for any number of threads. Changing the seed is also a quick way to get a different variant of the same fill.</p>
+</dd>
+</dl>
+</div>
+
+   </div>
+</div>
+
+<div class="pidoc_section" id="__Tips_for_astronomical_images__">
+   <h3 class="pidoc_sectionTitle">3&emsp;Tips for astronomical images</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Tips_for_astronomical_images', this );">[hide]</p>
+   <div id="Tips_for_astronomical_images">
+
+<ul class="pidoc_list">
+<li>Work on linear data with <em>Stretched</em> matching, before stretching the image.</li>
+<li>Mask or paint generously: include the halo of a trail or the diffraction spikes of a removed star, not just the bright core.</li>
+<li>Use a sample ring of 30 to 80 pixels on backgrounds with gradients; use the whole image for repetitive textures (a flat nebula field, for instance), where more candidates help.</li>
+<li>For very large holes (hundreds of pixels), increase the patch size to 15 to 21 and let <em>Auto</em> choose the pyramid levels.</li>
+<li>RGB images are matched as one three-channel image. For narrowband data with very different channel statistics, consider filling each channel separately.</li>
+<li>The cost scales with the number of hole pixels, not with the image size; a search radius or sample ring makes large images faster still.</li>
+</ul>
+   </div>
+</div>
+
+<div class="pidoc_section" id="__Troubleshooting__">
+   <h3 class="pidoc_sectionTitle">4&emsp;Troubleshooting</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Troubleshooting', this );">[hide]</p>
+   <div id="Troubleshooting">
+
+<dl class="pidoc_list">
+<dt>
+<p><span class="pidoc_code">no valid source region</span></p>
+</dt>
+<dd>
+<p>No patch fits without touching the hole: the sample ring is too narrow, the patch is too large, or the hole covers almost the whole (preview) image. Increase the ring, reduce the patch size, or use a larger preview.</p>
+</dd>
+<dt>
+<p><span class="pidoc_code">searchRadius too small</span></p>
+</dt>
+<dd>
+<p>Some hole pixels have no source within the search radius. Increase it or set it to 0.</p>
+</dd>
+<dt>
+<p><span class="pidoc_code">Mask dimensions do not match</span></p>
+</dt>
+<dd>
+<p>The mask must have the dimensions of the target, or of the main image when the target is a preview.</p>
+</dd>
+<dt>
+<p><span class="pidoc_code">painting is only supported on main views</span></p>
+</dt>
+<dd>
+<p>The brush cannot start a session on a preview. Zoom into the main view instead.</p>
+</dd>
+<dt>
+<p>Visible seam</p>
+</dt>
+<dd>
+<p>In Mask image mode increase <em>Feather</em> or enlarge the mask by a pixel or two; in Brush mode increase <em>Softness</em>.</p>
+</dd>
+<dt>
+<p>Repetitive or blocky fill</p>
+</dt>
+<dd>
+<p>Reduce the patch size, add pyramid levels, or widen the sample ring so that more candidates are available.</p>
+</dd>
+<dt>
+<p>Slow</p>
+</dt>
+<dd>
+<p>Use a preview, set a search radius or a sample ring, or reduce the iterations.</p>
+</dd>
+</dl>
+   </div>
+</div>
+
+<div class="pidoc_section" id="__Algorithm_summary__">
+   <h3 class="pidoc_sectionTitle">5&emsp;Algorithm summary</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'Algorithm_summary', this );">[hide]</p>
+   <div id="Algorithm_summary">
+<p>For each pyramid level, from the coarsest to the finest:</p>
+
+<ol class="pidoc_list">
+<li class="pidoc_spaced_list_item">A <em>nearest-neighbour field</em> maps every patch overlapping the hole to a source patch that does not overlap it (and lies inside the sample ring and search radius, if set). At the coarsest level the hole is first filled by diffusion and the field is initialized at random; at finer levels the field is upsampled from the previous one.</li>
+<li class="pidoc_spaced_list_item"><em>Iterations</em> passes of PatchMatch improve the field: each pixel tries the offsets of its neighbours (propagation) and random offsets at decreasing distances (random search), keeping whichever gives the smallest patch distance. Distances are computed in the selected <em>Match space</em>.</li>
+<li class="pidoc_spaced_list_item">The hole is rebuilt by <em>voting</em>: every pixel becomes the average of the values proposed by all the source patches that cover it.</li>
+</ol>
+
+<p>The final level writes the synthesized pixels back through the compositing weight of the hole (the brush profile and opacity, or the mask and feather). Work is split into fixed row bands with per-band random streams, which is what makes the result independent of the thread count.</p>
+   </div>
+</div>
+
+<div class="pidoc_section" id="__references__">
+   <h3 class="pidoc_sectionTitle">References</h3>
+   <div id="references">
+      <p id="__reference_1__"><strong>[1]</strong> C. Barnes, E. Shechtman, A. Finkelstein and D. B. Goldman, <em>PatchMatch: A Randomized Correspondence Algorithm for Structural Image Editing</em>, ACM Transactions on Graphics (Proc. SIGGRAPH), vol. 28, no. 3, 2009.</p>
+   </div>
+</div>
+
+<hr class="separator"/>
+
+<div id="copyright">
+   <p>Copyright &copy; 2026 A. Witwicki. All Rights Reserved.</p>
+</div>
+
+<div id="footer">
+   <p>Repatch tool documentation. This page is maintained by hand in the Repatch repository (doc/tools/Repatch/Repatch.html) in the format produced by the PixInsight Documentation Compiler.</p>
+</div>
+<br/>
+<br/>
+
+</div> <!-- contents -->
+
+</body>
+</html>

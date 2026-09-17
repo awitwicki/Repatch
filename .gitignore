@@ -5,3 +5,5 @@ bin/
 dist/
 /docs/superpowers
 *.mov
+*.xssk
+/PCL

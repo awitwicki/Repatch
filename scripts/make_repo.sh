@@ -6,7 +6,7 @@
 # (Resources > Updates > Manage Repositories).
 #
 #   scripts/make_repo.sh [--package=FILE]... [--base-url=URL] [--notes=FILE]
-#                        [--out=DIR] [--core-versions=A:B] [--no-sign]
+#                        [--out=DIR] [--core-versions=[PLATFORM=]A:B]... [--no-sign]
 #                        [--xssk-file=PATH] [--pixinsight=PATH]
 #
 # --package   signed package from scripts/package.sh; may be repeated, once
@@ -18,9 +18,13 @@
 #             PixInsight fetches <base-url>updates.xri (default: GitHub Pages
 #             of this repository)
 # --notes     HTML fragment (<p>...</p>) with the release notes
-# --core-versions  PixInsight core version range per platform (default
-#             1.9.4:1.9.5). Note that a module requires a core whose API
-#             version is at least that of the PCL it was built against.
+# --core-versions  PixInsight core version range (default 1.9.4:1.9.5), either
+#             for every platform:            --core-versions=1.9.4:1.9.5
+#             or for one of them:            --core-versions=windows-x64=1.9.5:1.9.5
+#             Repeatable; a platform without an override uses the default.
+#             A module requires a core whose API version is at least that of
+#             the PCL it was built against, so a module built against a newer
+#             PCL than another platform's needs a narrower range here.
 # --no-sign   skip signing (PixInsight rejects unsigned repositories unless
 #             Security/AllowUnsignedRepositories is enabled)
 #
@@ -34,6 +38,9 @@ BASE_URL="https://awitwicki.github.io/Repatch/"
 NOTES=""
 OUT="$ROOT/dist/repo"
 CORE_VERSIONS="1.9.4:1.9.5"
+# Per-platform overrides as "platform=range" lines. macOS still ships bash 3.2,
+# which has no associative arrays, so this is a plain newline-separated list.
+CORE_VERSIONS_OVERRIDES=""
 SIGN=1
 XSSK="$ROOT/pikey.xssk"
 PI=""
@@ -46,7 +53,17 @@ for arg in "$@"; do
         --base-url=*)      BASE_URL="${arg#*=}" ;;
         --notes=*)         NOTES="${arg#*=}" ;;
         --out=*)           OUT="${arg#*=}" ;;
-        --core-versions=*) CORE_VERSIONS="${arg#*=}" ;;
+        --core-versions=*)
+            _cv="${arg#*=}"
+            # A bare range is the default for every platform; "platform=range"
+            # overrides one. The range itself contains colons, so the platform
+            # is separated with "=", not ":".
+            case "$_cv" in
+                *=*) CORE_VERSIONS_OVERRIDES="$CORE_VERSIONS_OVERRIDES
+${_cv%%=*}=${_cv#*=}" ;;
+                *)   CORE_VERSIONS="$_cv" ;;
+            esac
+            ;;
         --no-sign)         SIGN=0 ;;
         --xssk-file=*)     XSSK="${arg#*=}" ;;
         --pixinsight=*)    PI="${arg#*=}" ;;
@@ -76,9 +93,25 @@ fi
 platform_os()     { case "$1" in macosx-arm64) echo macosx ;; windows-x64) echo windows ;; esac; }
 platform_arch()   { case "$1" in macosx-arm64) echo arm64  ;; windows-x64) echo x64     ;; esac; }
 platform_module() { case "$1" in macosx-arm64) echo Repatch-pxm.dylib ;; windows-x64) echo Repatch-pxm.dll ;; esac; }
+platform_label()  { case "$1" in macosx-arm64) echo "macOS (Apple Silicon)" ;; windows-x64) echo "Windows (x64)" ;; esac; }
+
+# The --core-versions override for a platform, or the global default.
+platform_core_versions() {
+    local found
+    found="$(printf '%s\n' "$CORE_VERSIONS_OVERRIDES" | sed -n "s/^$1=\(.*\)$/\1/p" | tail -1)"
+    if [ -n "$found" ]; then echo "$found"; else echo "$CORE_VERSIONS"; fi
+}
+
+# "1.9.4:1.9.5" -> "1.9.4 or 1.9.5"; "1.9.5:1.9.5" -> "1.9.5". Used for the
+# default release notes so they cannot contradict the version attributes.
+core_versions_prose() {
+    local lo="${1%%:*}" hi="${1##*:}"
+    if [ "$lo" = "$hi" ]; then echo "$lo"; else echo "$lo or $hi"; fi
+}
 
 VERSION=""
 PLATFORM_BLOCKS=""
+REQUIREMENTS=""
 for PACKAGE in "${PACKAGES[@]}"; do
     [ -f "$PACKAGE" ] || fail "package not found: $PACKAGE"
     FILE="$(basename "$PACKAGE")"
@@ -110,9 +143,11 @@ for PACKAGE in "${PACKAGES[@]}"; do
     ACTUAL="$(shasum -a 1 "$PACKAGE" | cut -d' ' -f1)"
     [ "$SHA1" = "$ACTUAL" ] || fail "$FILE.sha1 says $SHA1 but the file hashes to $ACTUAL"
 
-    echo "  $PLATFORM  $FILE  sha1=$SHA1"
+    PKG_CORE="$(platform_core_versions "$PLATFORM")"
+    echo "  $PLATFORM  $FILE  sha1=$SHA1  core=$PKG_CORE"
+    REQUIREMENTS="$REQUIREMENTS, PixInsight $(core_versions_prose "$PKG_CORE") on $(platform_label "$PLATFORM")"
     PLATFORM_BLOCKS="$PLATFORM_BLOCKS
-   <platform os=\"$(platform_os "$PLATFORM")\" arch=\"$(platform_arch "$PLATFORM")\" version=\"$CORE_VERSIONS\">
+   <platform os=\"$(platform_os "$PLATFORM")\" arch=\"$(platform_arch "$PLATFORM")\" version=\"$PKG_CORE\">
       <package fileName=\"$FILE\" serverURL=\"$BASE_URL\" sha1=\"$SHA1\" type=\"module\" metadata=\"@@META@@\">
          <remove>
             bin/$(platform_module "$PLATFORM"), bin/Repatch-pxm.xsgn
@@ -129,7 +164,9 @@ if [ -n "$NOTES" ]; then
     [ -f "$NOTES" ] || fail "notes file not found: $NOTES"
     NOTES_HTML="$(cat "$NOTES")"
 else
-    NOTES_HTML="<p>Repatch $VERSION: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires PixInsight 1.9.4 or 1.9.5 on macOS (Apple Silicon) or Windows (x64).</p>"
+    # REQUIREMENTS was accumulated per package, so the prose always agrees with
+    # the version attributes emitted above. It starts with ", ".
+    NOTES_HTML="<p>Repatch $VERSION: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires ${REQUIREMENTS#, }.</p>"
 fi
 
 mkdir -p "$OUT"

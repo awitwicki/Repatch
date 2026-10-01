@@ -1,0 +1,7 @@
+# This branch is served verbatim by GitHub Pages and PixInsight verifies both
+# the <Signature> over updates.xri and the sha1 of each package, so no file
+# here may have its bytes rewritten by a line-ending conversion on checkout.
+*               -text
+*.xri           text eol=lf
+*.sha1          text eol=lf
+*.tar.gz        binary

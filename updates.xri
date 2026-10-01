@@ -6,7 +6,7 @@
    <metadata id="20261001-repatch-0.1.0" releaseDate="20261001">
       <title>Repatch Module Version 0.1.0</title>
       <description>
-         <p>Repatch 0.1.0: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires PixInsight 1.9.4 or 1.9.5 on macOS (Apple Silicon).</p>
+         <p>Repatch 0.1.0: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires PixInsight 1.9.4 or 1.9.5 on macOS (Apple Silicon), PixInsight 1.9.5 on Windows (x64).</p>
       </description>
    </metadata>
    <platform os="macosx" arch="arm64" version="1.9.4:1.9.5">
@@ -16,5 +16,12 @@
          </remove>
       </package>
    </platform>
+   <platform os="windows" arch="x64" version="1.9.5:1.9.5">
+      <package fileName="Repatch-0.1.0-windows-x64.tar.gz" serverURL="https://awitwicki.github.io/Repatch/" sha1="5dad30bdcf2fc367e7f51e9445060d23c2b01d52" type="module" metadata="20261001-repatch-0.1.0">
+         <remove>
+            bin/Repatch-pxm.dll, bin/Repatch-pxm.xsgn
+         </remove>
+      </package>
+   </platform>
 </xri>
-<Signature developerId="awitwicki" timestamp="2026-10-01T18:51:21.864Z" encoding="Base64">J1OZgXMKqZgkNUYKvNfke8djmEsstu6WTFvrXkAxOd2P+JcmW4DWscc/Mz1A62JsXlhJvbCm3z6plIp8nL5QBg==</Signature>
+<Signature developerId="awitwicki" timestamp="2026-10-01T20:55:04.560Z" encoding="Base64">PxxgGXpDILrS977GVVGsw40nTyC06SYX1siBqZmB0xtg9w2uZMyvWrCIbcobigQ6sBx6FVvlNFESgsFzmq2TAA==</Signature>

@@ -1,0 +1,36 @@
+# Line endings. The repository is built on macOS and Windows, and this file
+# exists because core.autocrlf=true on a Windows clone would otherwise hand
+# CRLF to the shell scripts, where a `#!/bin/bash\r` shebang fails outright.
+#
+# Everything is stored with LF in the repository; only the working-copy form
+# differs per type.
+
+*               text=auto
+
+# Shell scripts must keep LF even on Windows: they run under Git Bash here and
+# natively on macOS.
+*.sh            text eol=lf
+
+# PowerShell and batch files are Windows-only, so CRLF is their native form.
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# updates.xri is signed by PixInsight over its exact bytes, so its line endings
+# must not depend on the platform that checked it out.
+*.xri           text eol=lf
+*.xsgn          text eol=lf
+
+# Binaries: never translate, never diff as text.
+*.xssk          binary
+*.tar.gz        binary
+*.sha1          text eol=lf
+*.dll           binary
+*.dylib         binary
+*.so            binary
+*.lib           binary
+*.a             binary
+*.fits          binary
+*.png           binary
+*.jpg           binary
+*.mov           binary

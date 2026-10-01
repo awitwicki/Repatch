@@ -328,7 +328,7 @@ cp dist/repo/* ../Repatch-pages/ && cd ../Repatch-pages && git add -A && git com
 ```
 
 `scripts/make_repo.sh` refuses unsigned packages, writes one `<platform
-os="macosx" arch="arm64" version="1.9.4:1.9.4">` entry (widen the range only
+os="macosx" arch="arm64" version="1.9.4:1.9.5">` entry (widen the range only
 after testing on a newer core), lists the previous module files in
 `<remove>`, validates the XML, and signs it (password prompted, never
 stored). `--base-url` changes the hosting location; `--no-sign` is for

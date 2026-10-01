@@ -9,8 +9,8 @@
 # printed. Close PixInsight before running this script.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-XSSK="$ROOT/../pikey.xssk"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+XSSK="$ROOT/pikey.xssk"
 MODULE="$ROOT/bin/macosx/arm64/Repatch-pxm.dylib"
 PI="/Applications/PixInsight/PixInsight.app/Contents/MacOS/PixInsight"
 

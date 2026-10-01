@@ -50,17 +50,6 @@ will work straight away.
 
 There is no Intel macOS or Linux build.
 
-> **Before you try: installation currently only works for the author.**
-> PixInsight accepts a module only if it trusts the identity that signed it.
-> Repatch is signed with the author's *local* signing identity, which exists
-> only on his machine, so on any other computer the install stops with
-> `Unknown code signing identity`. Distributing to everyone else needs a
-> Certified PixInsight Developer identity from Pleiades Astrophoto, which
-> Repatch does not have yet. Nothing you can configure on your side changes
-> this — if you want to use Repatch today, you will have to build and sign it
-> yourself with your own key (see the
-> [developer guide](docs/developer-guide.md)).
-
 ## Quick start
 
 **With the brush (the default).** Open **Process → Painting → Repatch** and

@@ -72,10 +72,38 @@ ${_cv%%=*}=${_cv#*=}" ;;
     esac
 done
 
+# Which kind of shell host this is. Windows has two bash flavours and they
+# differ in both the mount prefix and the path-translation tool, so they cannot
+# be lumped together: Git Bash sees C: as /c, WSL as /mnt/c.
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) HOST_KIND=msys ;;
+    Darwin)               HOST_KIND=macos ;;
+    Linux)
+        if grep -qi microsoft /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}" ]
+        then HOST_KIND=wsl
+        else HOST_KIND=unix
+        fi
+        ;;
+    *)                    HOST_KIND=unix ;;
+esac
+
+# PixInsight.exe is a native Windows program: under WSL it will not understand
+# a /mnt/e/... argument, and under Git Bash the automatic MSYS translation is
+# easy to defeat with an =-joined option, so paths handed to it are converted
+# explicitly here.
+native_path() {
+    case "$HOST_KIND" in
+        wsl)  wslpath -w "$1" ;;
+        msys) cygpath -w "$1" ;;
+        *)    printf '%s\n' "$1" ;;
+    esac
+}
+
 if [ -z "$PI" ]; then
-    case "$(uname -s)" in
-        MINGW*|MSYS*|CYGWIN*) PI="/c/Program Files/PixInsight/bin/PixInsight.exe" ;;
-        *) PI="/Applications/PixInsight/PixInsight.app/Contents/MacOS/PixInsight" ;;
+    case "$HOST_KIND" in
+        msys) PI="/c/Program Files/PixInsight/bin/PixInsight.exe" ;;
+        wsl)  PI="/mnt/c/Program Files/PixInsight/bin/PixInsight.exe" ;;
+        *)    PI="/Applications/PixInsight/PixInsight.app/Contents/MacOS/PixInsight" ;;
     esac
 fi
 
@@ -191,14 +219,37 @@ EOF
 # leaves a second top-level element, so the signed file is not well-formed XML
 # and cannot be checked afterwards. xmllint is not present on Windows, where
 # PowerShell's XML parser does the same job.
-if command -v xmllint >/dev/null 2>&1; then
-    xmllint --noout "$XRI" 2>/dev/null || fail "generated $XRI is not well-formed XML (check --notes)"
-elif command -v powershell >/dev/null 2>&1; then
-    powershell -NoProfile -Command "try { [xml](Get-Content -Raw '$(cygpath -w "$XRI" 2>/dev/null || echo "$XRI")') | Out-Null; exit 0 } catch { exit 1 }" \
-        || fail "generated $XRI is not well-formed XML (check --notes)"
-else
-    echo "WARNING: neither xmllint nor powershell found; skipping XML validation of $XRI"
-fi
+xml_is_well_formed() {
+    if command -v xmllint >/dev/null 2>&1; then
+        xmllint --noout "$1" 2>/dev/null
+        return
+    fi
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c 'import sys,xml.etree.ElementTree as E; E.parse(sys.argv[1])' "$1" 2>/dev/null
+        return
+    fi
+    # Git Bash has `powershell`; WSL reaches it as `powershell.exe` over interop.
+    local ps
+    for ps in powershell powershell.exe pwsh pwsh.exe; do
+        if command -v "$ps" >/dev/null 2>&1; then
+            "$ps" -NoProfile -Command \
+                "try { [xml](Get-Content -Raw '$(native_path "$1")') | Out-Null; exit 0 } catch { exit 1 }" \
+                >/dev/null 2>&1
+            return
+        fi
+    done
+    return 2   # no validator available
+}
+
+# The `|| xml_status=$?` form keeps set -e from aborting on a validation
+# failure, and captures the 2 that means "no validator available".
+xml_status=0
+xml_is_well_formed "$XRI" || xml_status=$?
+case "$xml_status" in
+    0) ;;
+    2) echo "WARNING: no XML validator (xmllint, python3 or powershell) found; skipping validation of $XRI" ;;
+    *) fail "generated $XRI is not well-formed XML (check --notes)" ;;
+esac
 
 for PACKAGE in "${PACKAGES[@]}"; do
     cp -p "$PACKAGE" "$OUT/$(basename "$PACKAGE")"
@@ -213,7 +264,9 @@ if [ "$SIGN" = 1 ]; then
     echo
     [ -n "$XSSK_PASSWORD" ] || fail "empty password"
     echo "Signing $XRI"
-    "$PI" --sign-xml-file="$XRI" --xssk-file="$XSSK" --xssk-password="$XSSK_PASSWORD" --no-splash || true
+    "$PI" --sign-xml-file="$(native_path "$XRI")" \
+          --xssk-file="$(native_path "$XSSK")" \
+          --xssk-password="$XSSK_PASSWORD" --no-splash || true
     unset XSSK_PASSWORD
     # PixInsight is a GUI binary on Windows: it reports nothing useful on the
     # console, can exit nonzero after a successful run, and may write the file

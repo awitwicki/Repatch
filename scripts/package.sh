@@ -45,8 +45,17 @@ done
 
 if [ -z "$PLATFORM" ]; then
     case "$(uname -s)" in
-        Darwin)                      PLATFORM="macosx-arm64" ;;
-        MINGW*|MSYS*|CYGWIN*)        PLATFORM="windows-x64" ;;
+        Darwin)               PLATFORM="macosx-arm64" ;;
+        MINGW*|MSYS*|CYGWIN*) PLATFORM="windows-x64" ;;
+        Linux)
+            # WSL packages the Windows build: this project has no Linux target,
+            # and bin/windows/x64 is what a Windows checkout actually contains.
+            if grep -qi microsoft /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}" ]; then
+                PLATFORM="windows-x64"
+            else
+                fail "cannot infer the target platform on Linux; pass --platform="
+            fi
+            ;;
         *) fail "cannot infer the target platform on $(uname -s); pass --platform=" ;;
     esac
 fi

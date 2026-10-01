@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xri version="1.0">
+   <description>
+      <p>Repatch — content-aware fill for PixInsight. Update repository of https://github.com/awitwicki/Repatch</p>
+   </description>
+   <metadata id="20261001-repatch-0.1.0" releaseDate="20261001">
+      <title>Repatch Module Version 0.1.0</title>
+      <description>
+         <p>Repatch 0.1.0: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires PixInsight 1.9.4 or 1.9.5 on macOS (Apple Silicon).</p>
+      </description>
+   </metadata>
+   <platform os="macosx" arch="arm64" version="1.9.4:1.9.5">
+      <package fileName="Repatch-0.1.0-macosx-arm64.tar.gz" serverURL="https://awitwicki.github.io/Repatch/" sha1="e5e26ebd64a74f065e247ebc549ae0cfeb8acb94" type="module" metadata="20261001-repatch-0.1.0">
+         <remove>
+            bin/Repatch-pxm.dylib, bin/Repatch-pxm.xsgn
+         </remove>
+      </package>
+   </platform>
+</xri>
+<Signature developerId="awitwicki" timestamp="2026-10-01T18:51:21.864Z" encoding="Base64">J1OZgXMKqZgkNUYKvNfke8djmEsstu6WTFvrXkAxOd2P+JcmW4DWscc/Mz1A62JsXlhJvbCm3z6plIp8nL5QBg==</Signature>

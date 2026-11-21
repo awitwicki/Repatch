@@ -105,6 +105,9 @@ take_module() {
 }
 take_module macosx-arm64 Repatch-pxm.dylib "$MAC_DIR"
 take_module windows-x64  Repatch-pxm.dll   "$WIN_DIR"
+# Browser downloads are quarantined; Gatekeeper would then refuse to load the
+# module, here and (if it reached a package) for every user.
+xattr -c "$MAC_DIR/Repatch-pxm.dylib" "$WIN_DIR/Repatch-pxm.dll"
 file "$MAC_DIR/Repatch-pxm.dylib" | grep -q arm64  || fail "Repatch-pxm.dylib is not an arm64 binary"
 file "$WIN_DIR/Repatch-pxm.dll"   | grep -q x86-64 || fail "Repatch-pxm.dll is not an x86-64 binary"
 

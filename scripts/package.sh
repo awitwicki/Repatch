@@ -115,6 +115,11 @@ cp -p "$MODULE" "$STAGE/bin/"
 [ "$SIGNED" = 1 ] && cp -p "$XSGN" "$STAGE/bin/"
 cp -Rp "$DOC" "$STAGE/doc/tools/Repatch"
 find "$STAGE" -name .DS_Store -delete
+# Drop extended attributes, above all com.apple.quarantine: a module taken from
+# a browser download carries it, and if it reached the archive macOS
+# Gatekeeper would refuse to load the module on every user's machine
+# ("Apple could not verify Repatch-pxm.dylib..."). Not present on Git Bash.
+if command -v xattr >/dev/null 2>&1; then xattr -cr "$STAGE"; fi
 chmod -R a+rX "$STAGE"
 # File mtimes are preserved from the sources; directories get the module's
 # mtime, and owner ids are fixed, so the same inputs give the same archive.

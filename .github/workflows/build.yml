@@ -141,7 +141,9 @@ jobs:
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productDisplayVersion
           Write-Host "Visual Studio $vs"
-          cmake --version | Select-Object -First 1
+          # Not "| Select-Object -First 1": that can kill cmake and leave
+          # $LASTEXITCODE = -1, which the pwsh step wrapper exits with.
+          @(cmake --version)[0]
           "vs=$vs" >> $env:GITHUB_OUTPUT
 
       - name: PCL cache key

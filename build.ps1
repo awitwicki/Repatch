@@ -51,14 +51,17 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
 }
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 if (-not (Test-Path $vswhere)) { Fail "vswhere.exe not found; install Visual Studio 2022" }
-$vsPath = & $vswhere -latest -products * `
+# Native output is collected and indexed rather than piped into
+# Select-Object -First, which can kill the process and leave a stale
+# $LASTEXITCODE of -1 behind.
+$vsPath = @(& $vswhere -latest -products * `
     -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    -property installationPath | Select-Object -First 1
+    -property installationPath)[0]
 if (-not $vsPath) {
     Fail "no Visual Studio install with the C++ toolset was found. Install the 'Desktop development with C++' workload."
 }
 Info "visual studio: $vsPath"
-Info "cmake: $((cmake --version | Select-Object -First 1))"
+Info "cmake: $(@(cmake --version)[0])"
 
 # --- PCL -------------------------------------------------------------------
 $cmakeArgs = @("-DCMAKE_BUILD_TYPE=$config")
@@ -70,8 +73,14 @@ if (-not $NoModule) {
     }
     $PclPath = (Resolve-Path $PclPath).Path
     Info "PCL: $PclPath"
-    & (Join-Path $root 'scripts\build_pcl.ps1') -PclDir $PclPath -Configuration Release
-    if ($LASTEXITCODE -ne 0) { Fail "PCL build failed" }
+    # build_pcl.ps1 reports failure by throwing. Its $LASTEXITCODE is only that
+    # of whatever native command ran last (with every library present that is
+    # just vswhere), so it must not be used as the script's result.
+    try {
+        & (Join-Path $root 'scripts\build_pcl.ps1') -PclDir $PclPath -Configuration Release
+    } catch {
+        Fail "PCL build failed: $_"
+    }
     $cmakeArgs += @("-DREPATCH_BUILD_MODULE=ON", "-DPCL_DIR=$PclPath")
 } else {
     $cmakeArgs += "-DREPATCH_BUILD_MODULE=OFF"

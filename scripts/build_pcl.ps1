@@ -60,9 +60,12 @@ New-Item -ItemType Directory -Force -Path $env:PCLLIBDIR64, $env:PCLBINDIR64 | O
 # MSBuild from the newest VS install that actually has the C++ toolset.
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 if (-not (Test-Path $vswhere)) { throw "build_pcl.ps1: vswhere.exe not found; is Visual Studio installed?" }
-$msbuild = & $vswhere -latest -products * `
+# Collect the whole output and index it: piping a native command into
+# Select-Object -First stops the pipeline early, which can kill vswhere and
+# leave $LASTEXITCODE = -1 for the caller to trip over.
+$msbuild = @(& $vswhere -latest -products * `
     -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+    -find 'MSBuild\**\Bin\MSBuild.exe')[0]
 if (-not $msbuild) {
     throw "build_pcl.ps1: no Visual Studio install with the C++ toolset was found. Install the component Microsoft.VisualStudio.Component.VC.Tools.x86.x64 ('MSVC v143 - VS 2022 C++ x64/x86 build tools')."
 }

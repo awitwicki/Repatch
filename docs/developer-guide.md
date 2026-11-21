@@ -17,7 +17,7 @@ scripts/build_pcl.ps1 Windows: the same via PCL's vc17 projects, or scripts/pcl 
 scripts/pcl/          CMake build of PCL-pxi.lib for trees without src/pcl/windows (see "Build")
 scripts/dev_sign_module.sh / .ps1   sign the module (hidden password prompt)
 scripts/pi_smoke.js   PJSR smoke test of the installed module (run from the Process Console)
-scripts/install_docs.sh  copies doc/tools/Repatch into <PixInsight>/doc/tools (sudo)
+scripts/install_docs.sh  dev-only, not shipped: copies doc/tools/Repatch into <PixInsight>/doc/tools (sudo)
 scripts/package.sh    assembles dist/Repatch-<version>-<platform>.tar.gz (bin/ + doc/ layout)
 scripts/make_repo.sh  writes dist/repo/updates.xri (signed) + packages for the GitHub Pages update repository
 .github/workflows/    CI: build + tests + unsigned package on macos-26 (see "Continuous integration")
@@ -53,11 +53,12 @@ do, and the NaN/Inf guards use bit-pattern checks so they survive it.
 Prerequisites: Xcode Command Line Tools (clang 17+; this repo was built with
 Apple clang 21 and CLT only — Xcode.app is not required), CMake ≥ 3.20,
 GNU make, a PCL checkout at `../PCL` matching the installed PixInsight core
-(1.9.4 Lockhart ↔ PCL 2.10.4, commit `afea714e68`).
+(1.9.5 Lockhart build 1706 ↔ PCL 2.11.0, commit `5a3902196a`; a newer
+core such as 1.9.6 loads the module as well).
 
 `./build.sh` does, in order:
 
-1. `scripts/build_pcl.sh` — builds `libcminpack lcms lz4 RFC6234 zlib zstd`
+1. `scripts/build_pcl.sh` — builds `liblcms lz4 RFC6234 zlib zstd`
    and `libPCL-pxi.a` into `$PCLDIR/lib/macosx/arm64` using PCL's own
    `makefile-arm64` files. Those makefiles hard-code Xcode.app's SDK path, so
    the script writes `makefile-arm64.local` copies with the SDK from
@@ -161,6 +162,7 @@ and any newer core is fine.
 | --- | --- | --- |
 | 2.10.4 | `0x0187` | older than 1.9.4 build 1696; the exact build is not recorded in the headers |
 | 2.10.8 | `0x0188` | 1.9.4 Lockhart **build 1696** |
+| 2.11.0 | `0x0188` | 1.9.4 Lockhart **build 1696** (same API as 2.10.8; shipped with 1.9.5 build 1706) |
 
 The build number comes from the single annotation that exists in all of PCL
 2.10.8 — `ProcessInterface.h`, "available since core version 1.9.4 Lockhart
@@ -171,7 +173,10 @@ to 1.9.4 builds older than 1696, where it fails to load. Hence the Windows
 package is advertised for 1.9.5 only — see "Releases and the update
 repository".
 
-Keeping the platforms on the same PCL commit avoids the whole question and is
+Both platforms now build against PCL 2.11.0, which has the same API version,
+so the floor is unchanged. PCL 2.11.0 also dropped the `cminpack` third-party
+library, so it is no longer built or linked. Keeping the
+platforms on the same PCL commit avoids the whole question and is
 worth doing before a release that matters.
 
 ## Working on Windows
@@ -287,10 +292,14 @@ content must stay in step with `docs/user-guide.md` and the interface (every
 control of every section bar, including the brush-mode special cases —
 Feather ignored, Sample ring 0 = `max(32, 3 × radius)`).
 
-Local install for testing: `scripts/install_docs.sh` copies
+Local install for testing (developer machines only): `scripts/install_docs.sh` copies
 `doc/tools/Repatch/` into `<PixInsight>/doc/tools/` (with `sudo`, since that
 tree is owned by root) and verifies the copy. Reopen the Repatch dialog and
-press *Browse Documentation*.
+press *Browse Documentation*. This script is a development convenience, not
+part of the product: it is never included in release packages, and users must
+not be told to run it. CPD rules 4.1 and 4.3 forbid products from writing to
+the PixInsight installation or requesting elevated privileges; users receive
+the page only through the signed update package.
 
 Note for scripts in general: the Documentation Compiler and `pi_smoke.js` are
 PJSR scripts; in this environment neither `PixInsight -n -r=<script>` (new
@@ -431,13 +440,14 @@ scripts/dev_sign_module.sh       # writes bin/macosx/arm64/Repatch-pxm.xsgn
 scripts/package.sh               # dist/Repatch-<version>-macosx-arm64.tar.gz + .sha1
 ```
 
-**CI covers macOS only.** There is no Windows job yet; the Windows package is
-built and signed on a developer machine with `build.ps1`,
-`scripts/dev_sign_module.ps1` and `scripts/package.sh --platform=windows-x64`
-(the platform is inferred from the host, so the flag is only needed when
-cross-labelling). A Windows job is feasible — it would fetch the pinned PCL
-commit from GitLab, which has no `PCL.vcxproj`, and so would go through
-`scripts/pcl` exactly as a local build with a git PCL tree does.
+**CI covers both platforms.** A second job, `windows-x64`, runs on
+`windows-2022` (Visual Studio 2022, the vc17 toolset of PCL's projects). It
+fetches the same PCL commit from GitLab — which has no `PCL.vcxproj`, so
+`build_pcl.ps1` builds the main library through `scripts/pcl` — caches `PCL/`
+(object files trimmed) under a key of the PCL commit, the Visual Studio
+version and the PCL build scripts, and runs `build.ps1`. Both jobs upload the
+bare module as `Repatch-module-<platform>-<sha>` (kept 90 days), which is what
+`scripts/release.sh` downloads.
 
 `scripts/package.sh` lays the archive out like the PixInsight installation
 root (`bin/Repatch-pxm.dylib` or `bin/Repatch-pxm.dll`,
@@ -506,8 +516,32 @@ from a branch, Branch: `gh-pages` / `(root)`**. The site is live at
 `https://awitwicki.github.io/Repatch/` a minute later.
 
 Release procedure (version bumped in `src/module/RepatchModule.cpp`, the
-release date too):
+release date too).
 
+**From one Mac (the normal way).** CI builds both modules, so no Windows
+machine is needed. Commit, push, wait for the `build` workflow to pass on
+that commit, and download its two artifacts from the run's page on GitHub
+(Actions → the run → Artifacts): `Repatch-module-macosx-arm64-<sha>` and
+`Repatch-module-windows-x64-<sha>`. Then:
+
+```bash
+scripts/release.sh --notes=notes.html      # looks in ~/Downloads; --modules-dir=DIR otherwise
+```
+
+It takes the unsigned `Repatch-pxm.dylib` and `Repatch-pxm.dll` from the
+artifacts — as the `.zip` files or as the folders Safari unpacks them into —
+and refuses artifacts whose `<sha>` is not `HEAD` (loose module files are
+accepted with a warning, since nothing ties them to a commit). It then asks for the `pikey.xssk` password once, signs both modules with the
+macOS PixInsight (`--sign-module-file` signs a `.dll` as well as a
+`.dylib`), runs `scripts/package.sh` for both platforms and
+`scripts/make_repo.sh`, and prints the publishing steps: replace the
+packages in `../Repatch-pages`, push, tag, and create the GitHub release on
+the web with the four `dist/` files. It refuses to
+run with uncommitted tracked changes, because the packages take
+`doc/tools/Repatch/` from the working tree and it must match the commit the
+modules were built from.
+
+**By hand, one machine per platform** (the fallback if CI is unavailable).
 On the macOS machine:
 
 ```bash
@@ -527,7 +561,7 @@ bash scripts/package.sh                # dist/Repatch-<v>-windows-x64.tar.gz + .
 Then, with both packages in `dist/` on whichever machine has the `.xssk`:
 
 ```bash
-scripts/make_repo.sh --core-versions=windows-x64=1.9.5:1.9.5 --notes=notes.html
+scripts/make_repo.sh --notes=notes.html
 
 git tag v<v> && git push origin v<v>
 gh release create v<v> dist/Repatch-<v>-*.tar.gz dist/Repatch-<v>-*.tar.gz.sha1 \
@@ -552,7 +586,6 @@ Pass them explicitly, or let the default pick up every signed
 scripts/make_repo.sh \
   --package=dist/Repatch-0.1.0-macosx-arm64.tar.gz \
   --package=dist/Repatch-0.1.0-windows-x64.tar.gz \
-  --core-versions=windows-x64=1.9.5:1.9.5 \
   --notes=notes.html
 ```
 
@@ -562,7 +595,11 @@ blob out of the branch (`git show origin/gh-pages:<file> > dist/<file>`) so its
 
 `--core-versions` takes either a range for everything or `platform=range` for
 one platform, repeatable. It exists because the platforms can sit on different
-PCL versions and therefore have different core floors: at 0.1.0 the macOS
+PCL versions and therefore have different core floors. Since both platforms
+moved to PCL 2.11.0 they share one range and no override is needed. The
+default is `1.9.6:1.9.6`: from 0.1.1 Repatch is published for PixInsight
+1.9.6 only (a 2.11.0 build would also load into 1.9.5, so that is a policy
+choice, not a technical limit). Historically, at 0.1.0 the macOS
 module was built against PCL 2.10.4 and is offered for `1.9.4:1.9.5`, while the
 Windows module was built against 2.10.8, needs API `0x0188`, and is offered for
 `1.9.5:1.9.5` only — `.xri` cannot say "1.9.4 build 1696" (see "Which

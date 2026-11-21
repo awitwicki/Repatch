@@ -56,8 +56,8 @@
 <li class="pidoc_tocItem"><a href="#__Tips_for_astronomical_images__">3&emsp;Tips for astronomical images</a></li>
 <li class="pidoc_tocItem"><a href="#__Troubleshooting__">4&emsp;Troubleshooting</a></li>
 <li class="pidoc_tocItem"><a href="#__Algorithm_summary__">5&emsp;Algorithm summary</a></li>
+<li class="pidoc_tocItem"><a href="#__PCL_license__">6&emsp;PixInsight Class Library acknowledgment and license</a></li>
 <li class="pidoc_tocItem"><a href="#__references__">References</a></li>
-<li class="pidoc_tocItem"><a href="#__related_tools__">Related Tools</a></li>
 </ul>
 </div>
 
@@ -72,6 +72,7 @@
 <p>The tool works coarse-to-fine. At a very low resolution the hole is filled by smooth diffusion, which fixes the large-scale gradient and brightness. Then, at each finer level, every patch that overlaps the hole is matched to the most similar patch elsewhere in the image with the PatchMatch algorithm<sup><a href="#__reference_1__" class="pidoc_referenceTooltip" onmouseover="pidoc_showReferenceToolTip( this );" onmouseout="pidoc_hideReferenceToolTip();" data-tooltip="[Reference 1]&lt;br/&gt;C. Barnes, E. Shechtman, A. Finkelstein and D. B. Goldman, &lt;em&gt;PatchMatch: A Randomized Correspondence Algorithm for Structural Image Editing&lt;/em&gt;, ACM Transactions on Graphics (Proc. SIGGRAPH), vol. 28, no. 3, 2009.">[1]</a></sup>, and the hole pixels are rebuilt by averaging what those matches propose. The result carries the surrounding noise, gradient and texture into the hole.</p>
 <p>Repatch is not magic: it can only reuse what already exists in the image. It is ideal for removing satellite trails, hot columns, blooming spikes, small artifacts, or unwanted objects on background; it cannot invent structure that the surroundings do not contain.</p>
 <p>This release implements the classic, non-neural PatchMatch algorithm. It runs entirely on the local machine, honours the global parallelism settings, and produces byte-identical results for a given random seed regardless of the number of threads.</p>
+<p>Repatch makes no network connections, launches no external programs, and stores no files outside the PixInsight installation. Its only persistent data are the process parameters, which PixInsight keeps in process icons, projects and the history like those of any other process.</p>
 <p><br class="pidoc_clearfix"/></p>
    </div>
 </div>
@@ -354,6 +355,77 @@
    </div>
 </div>
 
+<div class="pidoc_section" id="__PCL_license__">
+   <h3 class="pidoc_sectionTitle">6&emsp;PixInsight Class Library acknowledgment and license</h3>
+   <p class="pidoc_sectionToggleButton" onclick="pidoc_toggleSection( 'PCL_license', this );">[hide]</p>
+   <div id="PCL_license">
+<p>Repatch is a PixInsight module built with the PixInsight Class Library (PCL).</p>
+<p>This product is based on software from the PixInsight project, developed by Pleiades Astrophoto and its contributors (<a href="https://pixinsight.com/">https://pixinsight.com/</a>).</p>
+<p>PCL is Copyright &copy; 2003-2026 Pleiades Astrophoto S.L. All Rights Reserved. It is used under the following license:</p>
+<pre style="white-space:pre-wrap;">*******************************************************************************
+PixInsight Class Library License
+Version 2.0.1, 29 December 2025
+*******************************************************************************
+
+Copyright (c) 2025, Pleiades Astrophoto S.L. All Rights Reserved.
+
+Redistribution and use in both source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions, and the following restriction and disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions, and the following restriction and disclaimer in
+      the documentation and/or other materials provided with the distribution.
+
+   3. Neither the names "PixInsight" and "Pleiades Astrophoto" nor the names of
+      their contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission. For written
+      permission, please contact info@pixinsight.com.
+
+   4. All products derived from this software, in any form whatsoever, must
+      reproduce the following acknowledgment in the end-user documentation
+      and/or other materials provided with the product:
+
+      "This product is based on software from the PixInsight project, developed
+      by Pleiades Astrophoto and its contributors (https://pixinsight.com/)."
+
+      Alternatively, if that is where third-party acknowledgments normally
+      appear, this acknowledgment must be reproduced in the product itself.
+
+The use of this source code in whole or in part, in both source and binary
+forms, is strictly forbidden for:
+
+   a. Training machine learning systems, including, but not limited to,
+      language models, generative models, artificial intelligence systems, or
+      automated code generation systems.
+
+   b. Inclusion in training datasets or corpora for machine learning systems,
+      including, but not limited to, language models and generative models.
+
+   c. Providing API services that incorporate or derive from this software for
+      automated code generation.
+
+   This restriction applies to all commercial or non-profit entities and
+   expressly includes use via APIs, wrappers, or third-party tools. Exceptions
+   require explicit written permission from Pleiades Astrophoto S.L. For
+   written permission, please contact info@pixinsight.com.
+
+THIS SOFTWARE IS PROVIDED BY PLEIADES ASTROPHOTO AND ITS CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL PLEIADES ASTROPHOTO OR ITS CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, BUSINESS INTERRUPTION; PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; AND LOSS OF USE, DATA OR PROFITS) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</pre>
+   </div>
+</div>
+
 <div class="pidoc_section" id="__references__">
    <h3 class="pidoc_sectionTitle">References</h3>
    <div id="references">
@@ -365,6 +437,7 @@
 
 <div id="copyright">
    <p>Copyright &copy; 2026 A. Witwicki. All Rights Reserved.</p>
+   <p>This product is based on software from the PixInsight project, developed by Pleiades Astrophoto and its contributors (<a href="https://pixinsight.com/">https://pixinsight.com/</a>). PCL is Copyright &copy; 2003-2026 Pleiades Astrophoto S.L.; see <a href="#__PCL_license__">the PCL license</a>.</p>
 </div>
 
 <div id="footer">

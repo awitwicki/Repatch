@@ -15,7 +15,9 @@ sky around it.
 
 Repatch uses the classic multi-scale **PatchMatch** algorithm: no neural
 network, no internet connection, and deterministic — the same seed gives you
-the same pixels every time, so a result is reproducible months later. (A
+the same pixels every time, so a result is reproducible months later.
+It makes no network connections, launches no external programs and stores no
+files outside the PixInsight installation. (A
 `Neural` mode appears in the interface, greyed out; it is planned for a later
 release.)
 
@@ -45,8 +47,8 @@ will work straight away.
 
 | Platform | PixInsight |
 | --- | --- |
-| macOS, Apple Silicon | 1.9.4 or 1.9.5 Lockhart |
-| Windows, x64 | 1.9.5 Lockhart |
+| macOS, Apple Silicon | 1.9.6 |
+| Windows, x64 | 1.9.6 |
 
 There is no Intel macOS or Linux build.
 
@@ -91,3 +93,8 @@ Building Repatch from source, the module internals, releases: see the
 Not yet chosen by the author. Until a `LICENSE` file is added, all rights are
 reserved. PCL itself is distributed under the PixInsight Class Library
 License.
+
+This product is based on software from the PixInsight project, developed by Pleiades Astrophoto and its contributors (https://pixinsight.com/).
+PCL is Copyright (c) 2003-2026 Pleiades Astrophoto S.L. All Rights Reserved; the
+full PCL license text is reproduced in the module's documentation page
+(`doc/tools/Repatch/Repatch.html`, section 6), which ships in every package.

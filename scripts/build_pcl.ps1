@@ -8,7 +8,7 @@ present are skipped, so re-runs are cheap.
 
 Two mechanisms, because PCL's repository is not uniform on Windows:
 
-  * The six third-party libraries ship their own MSBuild projects under
+  * The five third-party libraries ship their own MSBuild projects under
     src/3rdparty/<lib>/windows/vc17, which this script drives directly --
     their flags and defines come from PCL itself.
 
@@ -70,7 +70,7 @@ Write-Host "[pcl] msbuild: $msbuild"
 Write-Host "[pcl] PCLDIR:  $PclDir"
 
 # --- third-party libraries: PCL's own MSBuild projects ---------------------
-foreach ($lib in @('cminpack', 'lcms', 'lz4', 'RFC6234', 'zlib', 'zstd')) {
+foreach ($lib in @('lcms', 'lz4', 'RFC6234', 'zlib', 'zstd')) {
     $out = Join-Path $env:PCLLIBDIR64 "$lib-pxi.lib"
     if (Test-Path $out) {
         Write-Host "[pcl] $lib-pxi.lib present"

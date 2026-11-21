@@ -20,7 +20,7 @@ authoritative long-form reference; this file is the short version.
 
 The module target needs a PCL checkout (default `../PCL`, or `PCLDIR` env /
 `-DPCL_DIR=`) at the commit pinned as `PCL_SHA` in
-`.github/workflows/build.yml` (PCL 2.10.4 ↔ PixInsight 1.9.4). Without PCL,
+`.github/workflows/build.yml` (PCL 2.11.0 ↔ PixInsight 1.9.5 build 1706; the module also loads into 1.9.6). Without PCL,
 plain `cmake -S . -B build` still configures with the module skipped.
 
 ```bash
@@ -43,16 +43,17 @@ Tests use the tiny harness in `tests/testing.h` (`TEST_CASE`, `CHECK`,
 
 ## Sign, package, release
 
-CI (`.github/workflows/build.yml`) builds and tests every push on an Apple
-Silicon runner and uploads an *unsigned* package; PixInsight signatures can
-only be produced locally by the PixInsight core with the developer's `.xssk`
-key, so releases are made on a developer machine:
+CI (`.github/workflows/build.yml`) builds and tests every push on macOS arm64
+and Windows x64 runners and uploads the *unsigned* modules; PixInsight
+signatures can only be produced locally by the PixInsight core with the
+developer's `.xssk` key, so releases are signed on one Mac:
 
 ```bash
+scripts/release.sh --notes=notes.html # CI modules for HEAD -> sign both (one password) -> package both -> signed updates.xri
 scripts/dev_sign_module.sh            # prompts for the .xssk password, writes bin/macosx/arm64/Repatch-pxm.xsgn
 scripts/package.sh                    # dist/Repatch-<version>-macosx-arm64.tar.gz + .sha1 (bin/ + doc/ layout)
 scripts/make_repo.sh --notes=notes.html   # dist/repo/updates.xri (signed) + package for the GitHub Pages update repo
-scripts/install_docs.sh               # copies doc/tools/Repatch into <PixInsight>/doc/tools (sudo)
+scripts/install_docs.sh               # dev-only: copies doc/tools/Repatch into <PixInsight>/doc/tools (sudo); never shipped
 ```
 
 The version comes from `MODULE_VERSION_*` / `MODULE_RELEASE_*` in

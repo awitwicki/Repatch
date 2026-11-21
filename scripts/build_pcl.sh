@@ -23,7 +23,7 @@ build_with_patched_makefile() {
     ( cd "$dir" && make -j "$NPROC" -f makefile-arm64.local )
 }
 
-for lib in cminpack lcms lz4 RFC6234 zlib zstd; do
+for lib in lcms lz4 RFC6234 zlib zstd; do
     if [ -f "$PCLLIBDIR64/lib${lib}-pxi.a" ]; then
         echo "[pcl] lib${lib}-pxi.a present"
     else

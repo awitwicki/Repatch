@@ -118,7 +118,7 @@ if(REPATCH_BUILD_MODULE)
   else()
     set(PCL_LIB_DIR "${PCL_DIR}/lib/${REPATCH_PCL_PLATFORM}/${REPATCH_PCL_ARCH}")
   endif()
-  foreach(lib PCL lz4 zstd zlib RFC6234 lcms cminpack)
+  foreach(lib PCL lz4 zstd zlib RFC6234 lcms)
     if(WIN32)
       set(REPATCH_LIB_FILE "${PCL_LIB_DIR}/${lib}-pxi.lib")
       set(REPATCH_LIB_HINT "run scripts/build_pcl.ps1 first")
@@ -148,13 +148,13 @@ if(REPATCH_BUILD_MODULE)
       OSX_ARCHITECTURES "${REPATCH_PCL_ARCH}")
     target_compile_definitions(Repatch-pxm PRIVATE _REENTRANT __PCL_MACOSX)
     target_compile_options(Repatch-pxm PRIVATE
-      -pipe -pthread -fPIC -O3 -ffunction-sections -fdata-sections -ffast-math -stdlib=libc++
+      -pipe -pthread -fPIC -O3 -ffunction-sections -fdata-sections -ffast-math -ffp-contract=on -Wno-overriding-option -stdlib=libc++
       -Wall -Wno-parentheses -Wno-missing-braces -Wno-nan-infinity-disabled -Wno-extern-c-compat)
     target_link_options(Repatch-pxm PRIVATE
       -stdlib=libc++ -Wl,-dead_strip -rdynamic -headerpad_max_install_names
       "-Wl,-install_name,@executable_path/Repatch-pxm.dylib")
     target_link_libraries(Repatch-pxm PRIVATE
-      "-framework AppKit" pthread PCL-pxi lz4-pxi zstd-pxi zlib-pxi RFC6234-pxi lcms-pxi cminpack-pxi)
+      "-framework AppKit" pthread PCL-pxi lz4-pxi zstd-pxi zlib-pxi RFC6234-pxi lcms-pxi)
   else()
     set_target_properties(Repatch-pxm PROPERTIES
       PREFIX "" OUTPUT_NAME "Repatch-pxm" SUFFIX ".dll"
@@ -176,7 +176,7 @@ if(REPATCH_BUILD_MODULE)
     # visible); userenv for GetUserProfileDirectoryW in pcl::File::HomeDirectory.
     # Everything else PCL needs is in CMake's default Windows library set.
     target_link_libraries(Repatch-pxm PRIVATE
-      PCL-pxi lz4-pxi zstd-pxi zlib-pxi RFC6234-pxi lcms-pxi cminpack-pxi
+      PCL-pxi lz4-pxi zstd-pxi zlib-pxi RFC6234-pxi lcms-pxi
       dbghelp userenv)
   endif()
 

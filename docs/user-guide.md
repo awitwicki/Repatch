@@ -15,6 +15,14 @@ ideal for removing satellite trails, hot columns, blooming spikes, small
 artifacts, or unwanted objects on background; it cannot invent structure that
 the surroundings do not contain.
 
+## Privacy and files
+
+Repatch runs entirely inside PixInsight on your machine. It makes no network
+connections, launches no external programs, and stores no files outside the
+PixInsight installation. Its only persistent data are the process parameters,
+which PixInsight keeps in process icons, projects and the history like those
+of any other process.
+
 ## Workflow with a mask image
 
 Choose *Mask source → Mask image* for this workflow.

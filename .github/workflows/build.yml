@@ -1,14 +1,17 @@
 # Builds, tests and packages the Repatch module on every push and pull request.
 #
-# The job runs on GitHub's Apple Silicon image (macos-26), fetches the pinned
-# PCL commit from GitLab, builds PCL's static libraries once (cached), then
-# runs ./build.sh (core, tests, CLI, module) and scripts/package.sh.
+# Two jobs, one per platform: macOS arm64 on GitHub's Apple Silicon image
+# (macos-26) and Windows x64 on windows-2022 (Visual Studio 2022 / vc17, the
+# toolset of PCL's own projects). Each fetches the pinned PCL commit from
+# GitLab, builds PCL's static libraries once (cached), then runs the platform
+# build script (core, tests, CLI, module).
 #
-# The artifact is UNSIGNED: PixInsight code signatures (.xsgn) can only be
+# Each job uploads the bare module as Repatch-module-<platform>-<sha>. Those
+# artifacts are UNSIGNED: PixInsight code signatures (.xsgn) can only be
 # produced by the PixInsight core application with the developer's .xssk key,
-# and PixInsight cannot run on a hosted runner. Sign locally with
-# ./sign_module.sh and re-run scripts/package.sh to produce an installable
-# package (see docs/developer-guide.md, "Continuous integration").
+# and PixInsight cannot run on a hosted runner. scripts/release.sh downloads
+# both modules for a commit and signs, packages and publishes them from one
+# Mac (see docs/developer-guide.md, "Continuous integration").
 name: build
 
 on:
@@ -27,8 +30,9 @@ concurrency:
 
 env:
   PCL_REPO: https://gitlab.com/pixinsight/PCL.git
-  # PCL 2.10.4 = PixInsight 1.9.4 Lockhart. Must match the core the module is installed into.
-  PCL_SHA: afea714e681853dfc21e70b5d53811ae41849e97
+  # PCL 2.11.0 = PixInsight 1.9.5 Lockhart build 1706 (API 0x0188). The module loads into
+  # any core at least as new as this PCL, so it also covers 1.9.6.
+  PCL_SHA: 5a3902196a7d7a701385a7113cbdce2976ae1a85
 
 jobs:
   macos-arm64:
@@ -107,3 +111,90 @@ jobs:
           path: Repatch/dist/
           if-no-files-found: error
           retention-days: 30
+
+      # The bare module, for scripts/release.sh.
+      - name: Upload module
+        uses: actions/upload-artifact@v7
+        with:
+          name: Repatch-module-macosx-arm64-${{ github.sha }}
+          path: Repatch/bin/macosx/arm64/Repatch-pxm.dylib
+          if-no-files-found: error
+          retention-days: 90
+
+  windows-x64:
+    name: Windows x64 — build, test
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: Repatch
+        shell: pwsh
+    steps:
+      - name: Check out Repatch
+        uses: actions/checkout@v7
+        with:
+          path: Repatch
+
+      - name: Toolchain
+        id: toolchain
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property catalog_productDisplayVersion
+          Write-Host "Visual Studio $vs"
+          cmake --version | Select-Object -First 1
+          "vs=$vs" >> $env:GITHUB_OUTPUT
+
+      - name: PCL cache key
+        id: pcl-key
+        shell: bash
+        run: echo "key=pcl-${PCL_SHA}-${{ runner.os }}-x64-vs${{ steps.toolchain.outputs.vs }}-${{ hashFiles('Repatch/scripts/build_pcl.ps1', 'Repatch/scripts/pcl/CMakeLists.txt') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore PCL (sources and static libraries)
+        id: pcl-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: PCL
+          key: ${{ steps.pcl-key.outputs.key }}
+
+      - name: Fetch PCL
+        if: steps.pcl-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          git init -q PCL
+          git -C PCL config core.autocrlf false
+          git -C PCL remote add origin "$PCL_REPO"
+          git -C PCL fetch --depth 1 origin "$PCL_SHA"
+          git -C PCL checkout -q FETCH_HEAD
+          rm -rf PCL/.git
+
+      # PCL's git tree has no PCL.vcxproj, so build_pcl.ps1 builds the main
+      # library through scripts/pcl. Object files and the CMake build tree are
+      # dropped once the .lib files exist, to keep the cache small.
+      - name: Build PCL static libraries
+        if: steps.pcl-cache.outputs.cache-hit != 'true'
+        run: |
+          ./scripts/build_pcl.ps1 -PclDir ..\PCL
+          Remove-Item -Recurse -Force ..\PCL\build-windows-x64 -ErrorAction SilentlyContinue
+          Get-ChildItem ..\PCL\src -Recurse -Directory -Filter x64 |
+            Where-Object { $_.FullName -match '\\windows\\vc17\\x64$' } |
+            Remove-Item -Recurse -Force
+
+      - name: Save PCL cache
+        if: steps.pcl-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: PCL
+          key: ${{ steps.pcl-key.outputs.key }}
+
+      - name: Build core, tests, CLI and module; run tests
+        run: ./build.ps1 -PclPath ..\PCL
+
+      # The bare module, for scripts/release.sh.
+      - name: Upload module
+        uses: actions/upload-artifact@v7
+        with:
+          name: Repatch-module-windows-x64-${{ github.sha }}
+          path: Repatch/bin/windows/x64/Repatch-pxm.dll
+          if-no-files-found: error
+          retention-days: 90

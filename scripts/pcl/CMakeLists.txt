@@ -4,7 +4,7 @@ project(PCLStatic LANGUAGES CXX)
 # ---------------------------------------------------------------------------
 # Builds PCL-pxi.lib for Windows x64.
 #
-# PCL's git repository ships windows/vc17 MSBuild projects for the six
+# PCL's git repository ships windows/vc17 MSBuild projects for the five
 # third-party libraries but NOT for the main library: src/pcl/windows/ does
 # not exist in the repo (only in an installed PixInsight, which carries
 # whatever PCL version that core was built from). Building the pinned PCL
@@ -32,8 +32,8 @@ project(PCLStatic LANGUAGES CXX)
 #   AdditionalOptions    /Zc:__cplusplus /permissive-
 #   WholeProgramOptimization false                    -> (no /GL)
 #
-# The project's file list is exactly src/pcl/*.cpp -- all 192 sources in
-# 2.10.8, with no exclusions and no per-file overrides -- so the glob below
+# The project's file list is exactly src/pcl/*.cpp -- all 196 sources in
+# 2.11.0, with no exclusions and no per-file overrides -- so the glob below
 # reproduces it for any PCL version.
 #
 # Invoked by scripts/build_pcl.ps1; not part of Repatch's own build.

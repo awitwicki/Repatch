@@ -2,7 +2,10 @@
 #
 # Signs the Repatch module with a PixInsight developer key (.xssk).
 #
-#   ./sign_module.sh [--xssk-file=PATH] [--module-file=PATH] [--pixinsight=PATH]
+#   scripts/dev_sign_module.sh [--xssk-file=PATH] [--module-file=PATH] [--pixinsight=PATH]
+#
+# --module-file defaults to bin/macosx/arm64/Repatch-pxm.dylib; a Windows
+# Repatch-pxm.dll can be signed here as well (see scripts/release.sh).
 #
 # The key password is read from the terminal with echo disabled. It is passed
 # only to the PixInsight signing command and is never written to disk or
@@ -21,7 +24,7 @@ for arg in "$@"; do
         --xssk-file=*)   XSSK="${arg#*=}" ;;
         --module-file=*) MODULE="${arg#*=}" ;;
         --pixinsight=*)  PI="${arg#*=}" ;;
-        -h|--help)       sed -n '2,10p' "$0"; exit 0 ;;
+        -h|--help)       sed -n '2,13p' "$0"; exit 0 ;;
         *)               fail "unknown option: $arg" ;;
     esac
 done
@@ -31,7 +34,8 @@ done
 [ -x "$PI" ]     || fail "PixInsight executable not found: $PI (use --pixinsight=PATH)"
 [ -t 0 ]         || fail "the password must be typed interactively; run this script from a terminal"
 
-XSGN="${MODULE%.dylib}.xsgn"
+# Repatch-pxm.dylib or Repatch-pxm.dll -> Repatch-pxm.xsgn
+XSGN="${MODULE%.*}.xsgn"
 rm -f "$XSGN"
 
 set +x

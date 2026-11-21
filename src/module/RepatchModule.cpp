@@ -1,12 +1,12 @@
 #define MODULE_VERSION_MAJOR     0
 #define MODULE_VERSION_MINOR     1
-#define MODULE_VERSION_REVISION  0
+#define MODULE_VERSION_REVISION  1
 #define MODULE_VERSION_BUILD     1
 #define MODULE_VERSION_LANGUAGE  eng
 
 #define MODULE_RELEASE_YEAR      2026
-#define MODULE_RELEASE_MONTH     9
-#define MODULE_RELEASE_DAY       17
+#define MODULE_RELEASE_MONTH     11
+#define MODULE_RELEASE_DAY       21
 
 #include "RepatchModule.h"
 #include "RepatchProcess.h"

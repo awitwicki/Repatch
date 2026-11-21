@@ -155,8 +155,10 @@ for PACKAGE in "${PACKAGES[@]}"; do
         || fail "$FILE does not contain bin/Repatch-pxm.xsgn"
 
     # Repatch-<version>-<platform>.tar.gz
-    PKG_VERSION="$(printf '%s' "$FILE" | sed -n 's/^Repatch-\(.*\)-\(macosx-arm64\|windows-x64\)\.tar\.gz$/\1/p')"
-    PLATFORM="$(printf '%s' "$FILE" | sed -n 's/^Repatch-.*-\(macosx-arm64\|windows-x64\)\.tar\.gz$/\1/p')"
+    # sed -E: alternation in a basic regex (\|) is a GNU extension that the
+    # BSD sed of macOS does not understand, so it would silently match nothing.
+    PKG_VERSION="$(printf '%s' "$FILE" | sed -n -E 's/^Repatch-(.*)-(macosx-arm64|windows-x64)\.tar\.gz$/\1/p')"
+    PLATFORM="$(printf '%s' "$FILE" | sed -n -E 's/^Repatch-.*-(macosx-arm64|windows-x64)\.tar\.gz$/\1/p')"
     [ -n "$PKG_VERSION" ] && [ -n "$PLATFORM" ] \
         || fail "cannot read version and platform from the package name: $FILE"
     if [ -z "$VERSION" ]; then

@@ -3,25 +3,26 @@
    <description>
       <p>Repatch — content-aware fill for PixInsight. Update repository of https://github.com/awitwicki/Repatch</p>
    </description>
-   <metadata id="20261001-repatch-0.1.0" releaseDate="20261001">
-      <title>Repatch Module Version 0.1.0</title>
+   <metadata id="20261121-repatch-0.1.1" releaseDate="20261121">
+      <title>Repatch Module Version 0.1.1</title>
       <description>
-         <p>Repatch 0.1.0: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires PixInsight 1.9.4 or 1.9.5 on macOS (Apple Silicon), PixInsight 1.9.5 on Windows (x64).</p>
+         <p>Repatch 0.1.1: content-aware fill (PatchMatch) for PixInsight, with a healing-brush interface and a mask-image mode. Requires PixInsight 1.9.6.</p>
+         <p>Changes: built against PCL 2.11.0; the documentation page now includes the PixInsight Class Library acknowledgment, copyright notice and license, and states that Repatch makes no network connections, launches no external programs and stores no files outside the PixInsight installation.</p>
       </description>
    </metadata>
-   <platform os="macosx" arch="arm64" version="1.9.4:1.9.5">
-      <package fileName="Repatch-0.1.0-macosx-arm64.tar.gz" serverURL="https://awitwicki.github.io/Repatch/" sha1="e5e26ebd64a74f065e247ebc549ae0cfeb8acb94" type="module" metadata="20261001-repatch-0.1.0">
+   <platform os="macosx" arch="arm64" version="1.9.6:1.9.6">
+      <package fileName="Repatch-0.1.1-macosx-arm64.tar.gz" serverURL="https://awitwicki.github.io/Repatch/" sha1="3cbd4c8aea9201c1f9e363337f68994b62181570" type="module" metadata="20261121-repatch-0.1.1">
          <remove>
             bin/Repatch-pxm.dylib, bin/Repatch-pxm.xsgn
          </remove>
       </package>
    </platform>
-   <platform os="windows" arch="x64" version="1.9.5:1.9.5">
-      <package fileName="Repatch-0.1.0-windows-x64.tar.gz" serverURL="https://awitwicki.github.io/Repatch/" sha1="5dad30bdcf2fc367e7f51e9445060d23c2b01d52" type="module" metadata="20261001-repatch-0.1.0">
+   <platform os="windows" arch="x64" version="1.9.6:1.9.6">
+      <package fileName="Repatch-0.1.1-windows-x64.tar.gz" serverURL="https://awitwicki.github.io/Repatch/" sha1="fd7c59176e59223380fa7eeb1eb182b28bdaefe0" type="module" metadata="20261121-repatch-0.1.1">
          <remove>
             bin/Repatch-pxm.dll, bin/Repatch-pxm.xsgn
          </remove>
       </package>
    </platform>
 </xri>
-<Signature developerId="awitwicki" timestamp="2026-10-01T20:55:04.560Z" encoding="Base64">PxxgGXpDILrS977GVVGsw40nTyC06SYX1siBqZmB0xtg9w2uZMyvWrCIbcobigQ6sBx6FVvlNFESgsFzmq2TAA==</Signature>
+<Signature developerId="awitwicki" timestamp="2026-11-21T18:19:21.130Z" encoding="Base64">f2IUZnuSVpLcE+tSWCVfNwnPLQRFT2d8YfomoioLHe02vz0GI6EH44Yf66zh9vGTf4rpUX8lN4VpL9auz+wHAw==</Signature>

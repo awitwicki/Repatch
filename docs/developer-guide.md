@@ -20,6 +20,7 @@ scripts/pi_smoke.js   PJSR smoke test of the installed module (run from the Proc
 scripts/install_docs.sh  dev-only, not shipped: copies doc/tools/Repatch into <PixInsight>/doc/tools (sudo)
 scripts/package.sh    assembles dist/Repatch-<version>-<platform>.tar.gz (bin/ + doc/ layout)
 scripts/make_repo.sh  writes dist/repo/updates.xri (signed) + packages for the GitHub Pages update repository
+scripts/release.sh    one-Mac release: CI modules for HEAD -> sign both -> package both -> make_repo
 .github/workflows/    CI: build + tests + unsigned package on macos-26 (see "Continuous integration")
 doc/tools/Repatch/    the in-app documentation page (ready-made HTML + images, no compile step)
 src/core/repatch/     the algorithm: pure C++20, no PCL (enforced by a test)

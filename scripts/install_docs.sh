@@ -1,7 +1,12 @@
 #!/bin/bash
 #
-# Installs the Repatch documentation page into PixInsight, so the dialog's
-# "Browse Documentation" button finds it.
+# DEVELOPER TOOL ONLY - not part of the Repatch product and never shipped in a
+# release package. Users get the documentation page through the PixInsight
+# update system (doc/tools/Repatch in the signed package); do not tell users
+# to run this script.
+#
+# Installs the Repatch documentation page into a local development copy of
+# PixInsight, so the dialog's "Browse Documentation" button finds it.
 #
 #   scripts/install_docs.sh [--pixinsight-dir=DIR]
 #
@@ -19,7 +24,7 @@ fail() { printf '\033[0;31m[ERROR]\033[0m %s\n' "$1" >&2; exit 1; }
 for arg in "$@"; do
     case "$arg" in
         --pixinsight-dir=*) PIDIR="${arg#*=}" ;;
-        -h|--help)          sed -n '2,11p' "$0"; exit 0 ;;
+        -h|--help)          sed -n '2,16p' "$0"; exit 0 ;;
         *)                  fail "unknown option: $arg" ;;
     esac
 done

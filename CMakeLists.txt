@@ -106,6 +106,9 @@ add_test(NAME no_pcl_deps
 #   Windows x64 - src/pcl/windows/vc17/PCL.vcxproj
 # ---------------------------------------------------------------------------
 if(REPATCH_BUILD_MODULE)
+  # build.ps1 passes a native Windows path; normalize it so no backslash
+  # escape (e.g. the "\a" in D:\a\Repatch on a GitHub runner) is ever parsed.
+  file(TO_CMAKE_PATH "${PCL_DIR}" PCL_DIR)
   if(NOT PCL_DIR OR NOT EXISTS "${PCL_DIR}/include/pcl/Version.h")
     message(FATAL_ERROR "REPATCH_BUILD_MODULE is ON but PCL_DIR='${PCL_DIR}' is not a PCL checkout. Pass -DPCL_DIR=/path/to/PCL or -DREPATCH_BUILD_MODULE=OFF.")
   endif()

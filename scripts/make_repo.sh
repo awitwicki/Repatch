@@ -18,8 +18,8 @@
 #             PixInsight fetches <base-url>updates.xri (default: GitHub Pages
 #             of this repository)
 # --notes     HTML fragment (<p>...</p>) with the release notes
-# --core-versions  PixInsight core version range (default 1.9.4:1.9.5), either
-#             for every platform:            --core-versions=1.9.4:1.9.5
+# --core-versions  PixInsight core version range (default 1.9.6:1.9.6), either
+#             for every platform:            --core-versions=1.9.6:1.9.6
 #             or for one of them:            --core-versions=windows-x64=1.9.5:1.9.5
 #             Repeatable; a platform without an override uses the default.
 #             A module requires a core whose API version is at least that of
@@ -37,7 +37,7 @@ PACKAGES=()
 BASE_URL="https://awitwicki.github.io/Repatch/"
 NOTES=""
 OUT="$ROOT/dist/repo"
-CORE_VERSIONS="1.9.4:1.9.5"
+CORE_VERSIONS="1.9.6:1.9.6"
 # Per-platform overrides as "platform=range" lines. macOS still ships bash 3.2,
 # which has no associative arrays, so this is a plain newline-separated list.
 CORE_VERSIONS_OVERRIDES=""
@@ -259,9 +259,16 @@ done
 if [ "$SIGN" = 1 ]; then
     [ -f "$XSSK" ] || fail "signing key not found: $XSSK (use --xssk-file=PATH or --no-sign)"
     [ -f "$PI" ]   || fail "PixInsight executable not found: $PI (use --pixinsight=PATH)"
-    [ -t 0 ]       || fail "the password must be typed interactively; run this script from a terminal"
-    read -r -s -p "Password for $(basename "$XSSK"): " XSSK_PASSWORD
-    echo
+    # scripts/release.sh asks for the password once and hands it over in
+    # REPATCH_XSSK_PASSWORD for this one invocation; otherwise ask here.
+    if [ -n "${REPATCH_XSSK_PASSWORD:-}" ]; then
+        XSSK_PASSWORD="$REPATCH_XSSK_PASSWORD"
+        unset REPATCH_XSSK_PASSWORD
+    else
+        [ -t 0 ] || fail "the password must be typed interactively; run this script from a terminal"
+        read -r -s -p "Password for $(basename "$XSSK"): " XSSK_PASSWORD
+        echo
+    fi
     [ -n "$XSSK_PASSWORD" ] || fail "empty password"
     echo "Signing $XRI"
     "$PI" --sign-xml-file="$(native_path "$XRI")" \

@@ -42,6 +42,15 @@ project(PCLStatic LANGUAGES CXX)
 if(NOT MSVC)
   message(FATAL_ERROR "This project builds PCL with MSVC on Windows only.")
 endif()
+# build_pcl.ps1 passes native Windows paths. Backslashes must not reach a
+# CMake string that is re-parsed (the source list of add_library): a path like
+# D:\a\Repatch on a GitHub runner fails with "Invalid character escape '\a'".
+if(PCL_DIR)
+  file(TO_CMAKE_PATH "${PCL_DIR}" PCL_DIR)
+endif()
+if(PCL_LIB_OUT)
+  file(TO_CMAKE_PATH "${PCL_LIB_OUT}" PCL_LIB_OUT)
+endif()
 if(NOT PCL_DIR OR NOT EXISTS "${PCL_DIR}/include/pcl/Version.h")
   message(FATAL_ERROR "PCL_DIR='${PCL_DIR}' is not a PCL checkout. Pass -DPCL_DIR=<path>.")
 endif()

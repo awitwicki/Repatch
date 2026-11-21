@@ -21,7 +21,7 @@ scripts/install_docs.sh  dev-only, not shipped: copies doc/tools/Repatch into <P
 scripts/package.sh    assembles dist/Repatch-<version>-<platform>.tar.gz (bin/ + doc/ layout)
 scripts/make_repo.sh  writes dist/repo/updates.xri (signed) + packages for the GitHub Pages update repository
 scripts/release.sh    one-Mac release: CI modules for HEAD -> sign both -> package both -> make_repo
-.github/workflows/    CI: build + tests + unsigned package on macos-26 (see "Continuous integration")
+.github/workflows/    CI: build + tests on macos-26 and windows-2022, unsigned module artifacts (see "Continuous integration")
 doc/tools/Repatch/    the in-app documentation page (ready-made HTML + images, no compile step)
 src/core/repatch/     the algorithm: pure C++20, no PCL (enforced by a test)
 src/module/           the PixInsight adapter (PCL): parameters, process, instance, interface
@@ -427,7 +427,9 @@ the verification steps — and `scripts/package.sh`. The whole `PCL/` directory
 (sources + `lib/macosx/arm64/*.a`, object files trimmed) is cached under a
 key made of the PCL commit, Xcode and SDK versions and the PCL build scripts,
 so only the first run after one of those changes pays for the PCL build.
-The uploaded artifact is `dist/Repatch-<version>-macosx-arm64-unsigned.tar.gz`.
+`scripts/package.sh` still runs, as a check that packaging works, but its
+unsigned package is not uploaded; the only artifact is the bare module
+(see below).
 
 **CI cannot sign.** A `.xsgn` is produced only by the PixInsight core
 (`PixInsight --sign-module-file`) with the developer's `.xssk`; PixInsight

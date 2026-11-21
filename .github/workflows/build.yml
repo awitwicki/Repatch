@@ -101,16 +101,11 @@ jobs:
       - name: Build core, tests, CLI and module; run tests
         run: bash ./build.sh
 
-      - name: Package
+      # Checks that packaging still works; the unsigned package itself is not
+      # uploaded (PixInsight would refuse it, and scripts/release.sh packages
+      # the signed modules itself).
+      - name: Package (check only)
         run: bash scripts/package.sh --out=dist
-
-      - name: Upload package
-        uses: actions/upload-artifact@v7
-        with:
-          name: Repatch-macosx-arm64-unsigned-${{ github.sha }}
-          path: Repatch/dist/
-          if-no-files-found: error
-          retention-days: 30
 
       # The bare module, for scripts/release.sh.
       - name: Upload module
